@@ -12,6 +12,7 @@ utils::globalVariables(c("..colsToShow", "compareVersion"))
 #'   of modules.
 #'
 #' @export
+#' @importFrom data.table setnames setorderv
 #' @importFrom Require getPkgVersions Require
 #' @importFrom utils install.packages packageVersion
 #'
@@ -46,32 +47,49 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     out <- Require::Require(require = FALSE, AllPackagesUnlisted, install = FALSE, verbose = TRUE)
     out <- attr(out, "Require")
     okVersions <- Require::getPkgVersions(out)
-    okInstalled <- all(out$installed)
-    okVersion <- all(okVersions$compareVersion >= 0)
-    if (!requireNamespace("data.table", quietly = TRUE)) {stop("Please install.packages('data.table')")}
+    okInstalled <- out$installed
+    okVersion <- okVersions$compareVersion >= 0
+    if (anyNA(okVersion))
+      okVersion[is.na(okVersion)] <- TRUE
     data.table::setorderv(out, "Package")
     data.table::setnames(out, old = "Version", "InstalledVersion")
     colsToShow <- c("packageFullName", "Package", "InstalledVersion", "correctVersion")
-    out <- out[compareVersion < 0, ..colsToShow]
+    toRm <- setdiff(colnames(out), colsToShow)
+    data.table::set(out, NULL, toRm, NULL)
 
     uniquedPkgs <- unique(out$Package)
-    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(length(uniquedPkgs)))
+    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
+    dtLoaded <- data.table::data.table(Package = names(anyLoaded), loaded = anyLoaded)
+    out <- dtLoaded[out, on = "Package"]
+    needAction <- !okVersion | !okInstalled
+    if (any(needAction)) {
+      data.table::set(out, NULL, "needAction", FALSE)
+      out[needAction, needAction := TRUE]
 
-    if (!all(okVersion & okInstalled & anyLoaded)) {
-      obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
-      saveRDS(obj, file = AllPackagesFile)
-      message("The following packages are in an incorrect state: ")
-      reproducible::messageDF(print(out))
-      stop("Restart R; Run this function again immediately.", call. = FALSE)
+      doInstallsNow <- FALSE
+      if (all((needAction) & out$loaded)) {
+        obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
+        saveRDS(obj, file = AllPackagesFile)
+        message("The following packages are in an incorrect state: ")
+        reproducible::messageDF(print(out[needAction == TRUE]))
+        stop("Restart R; Run this function again immediately.", call. = FALSE)
+      }
+      Require::Require(out[needAction]$packageFullName, require = FALSE,
+                       upgrade = FALSE)
+
+    } else {
+      message("All 'reqdPkgs' in the modules in ",paste(modulePath, collapse = ", "),
+              " are installed with correct version")
     }
-    message("All 'reqdPkgs' in the modules in ",paste(modulePath, collapse = ", "),
-            " are installed with correct version")
+
+
   } else {
     AllPackagesUnlisted <- readRDS(AllPackagesFile)
     uniquedPkgs <- unique(AllPackagesUnlisted$state$Package)
-    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(length(uniquedPkgs)))
+    uniquedPkgs <- setdiff(uniquedPkgs, Require:::.basePkgs)
+    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
 
-    if (anyLoaded)
+    if (any(anyLoaded))
       stop("Some packages that need to be updated are still loaded; please restart R.",
            "You may have to change your .Rprofile or Rstudio settings so ",
            "packages don't get automatically loaded")
