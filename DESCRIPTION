@@ -6,7 +6,7 @@ Description: More about what it does (maybe more than one line)
 URL:
     https://spades-install.predictiveecology.org/,
     https://github.com/PredictiveEcology/SpaDES.install
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: c(
     person("Alex M", "Chubaty", email = "alex.chubaty@gmail.com",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135"))
@@ -14,11 +14,11 @@ Authors@R: c(
 Depends:
     R (>= 3.6)
 Imports:
-    data.table,
     methods,
     Require,
     utils
 Suggests:
+    data.table,
     reproducible,
     SpaDES.core
 Encoding: UTF-8

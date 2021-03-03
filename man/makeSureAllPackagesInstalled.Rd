@@ -7,7 +7,9 @@
 makeSureAllPackagesInstalled(modulePath)
 }
 \arguments{
-\item{modulePath}{The path to modules, as per \code{SpaDES.core::setPaths}.}
+\item{modulePath}{The path to modules, as per \code{SpaDES.core::setPaths}. Can
+be a vector of multiple character strings representing multiple locations
+of modules.}
 }
 \description{
 This function can be put at the start of project code.
@@ -17,6 +19,10 @@ It will prompt.
 }
 \examples{
 \dontrun{
-out <- makeSureAllPackagesInstalled(modulePath = "modules")
+makeSureAllPackagesInstalled(modulePath = "modules")
+
+# Multiple modulePath
+makeSureAllPackagesInstalled(c("~/GitHub/WBI_fireSense/modules/",
+                               "~/GitHub/SpaDES-modules/modules/"))
 }
 }

@@ -7,29 +7,39 @@ utils::globalVariables(c("..colsToShow", "compareVersion"))
 #' It will check all modules in `modulePath` for package dependencies.
 #' It will prompt.
 #'
-#' @param modulePath The path to modules, as per `SpaDES.core::setPaths`.
+#' @param modulePath The path to modules, as per `SpaDES.core::setPaths`. Can
+#'   be a vector of multiple character strings representing multiple locations
+#'   of modules.
 #'
 #' @export
-#' @importFrom data.table setnames setorderv
 #' @importFrom Require getPkgVersions Require
 #' @importFrom utils install.packages packageVersion
 #'
 #' @examples
 #' \dontrun{
-#' out <- makeSureAllPackagesInstalled(modulePath = "modules")
+#' makeSureAllPackagesInstalled(modulePath = "modules")
+#'
+#' # Multiple modulePath
+#' makeSureAllPackagesInstalled(c("~/GitHub/WBI_fireSense/modules/",
+#'                                "~/GitHub/SpaDES-modules/modules/"))
 #' }
 makeSureAllPackagesInstalled <- function(modulePath) {
   AllPackagesFile <- "._AllPackages.rds" ## TODO: put this in proper place
   if (!file.exists(AllPackagesFile)) {
-    AllModules <- dir(modulePath)
+    names(modulePath) <- modulePath
+    AllModules <- lapply(modulePath, dir)
+    # AllModules <- dir(modulePath)
     if (!requireNamespace("SpaDES.core", quietly = TRUE)) {
       ## installing SpaDES.core will also install reproducible
       message("Need to install SpaDES.core from CRAN to continue")
       Require("SpaDES.core")
     }
-    AllPackages <- lapply(AllModules, function(mod) {
-      print(mod)
-      SpaDES.core::packages(modules = mod, paths = modulePath)
+    AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
+      message(mp)
+      lapply(am, function(mod) {
+        message("  ", mod)
+        SpaDES.core::packages(modules = mod, paths = mp)
+      })
     })
 
     AllPackagesUnlisted <- unname(unlist(AllPackages))
@@ -38,6 +48,7 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     okVersions <- Require::getPkgVersions(out)
     okInstalled <- all(out$installed)
     okVersion <- all(okVersions$compareVersion >= 0)
+    if (!requireNamespace("data.table", quietly = TRUE)) {stop("Please install.packages('data.table')")}
     data.table::setorderv(out, "Package")
     data.table::setnames(out, old = "Version", "InstalledVersion")
     colsToShow <- c("packageFullName", "Package", "InstalledVersion", "correctVersion")
@@ -53,6 +64,8 @@ makeSureAllPackagesInstalled <- function(modulePath) {
       reproducible::messageDF(print(out))
       stop("Restart R; Run this function again immediately.", call. = FALSE)
     }
+    message("All 'reqdPkgs' in the modules in ",paste(modulePath, collapse = ", "),
+            " are installed with correct version")
   } else {
     AllPackagesUnlisted <- readRDS(AllPackagesFile)
     uniquedPkgs <- unique(AllPackagesUnlisted$state$Package)
@@ -60,7 +73,8 @@ makeSureAllPackagesInstalled <- function(modulePath) {
 
     if (anyLoaded)
       stop("Some packages that need to be updated are still loaded; please restart R.",
-           "You may have to change your settings so packages don't get automatically loaded")
+           "You may have to change your .Rprofile or Rstudio settings so ",
+           "packages don't get automatically loaded")
     Require::Require(require = FALSE, AllPackagesUnlisted$AllPackagesUnlisted, upgrade = FALSE)
     unlink(AllPackagesFile)
   }
