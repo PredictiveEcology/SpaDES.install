@@ -9,7 +9,9 @@ URL:
 Version: 0.0.4
 Authors@R: c(
     person("Alex M", "Chubaty", email = "alex.chubaty@gmail.com",
-    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135"))
+    role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
+    person("Eliot J B", "McIntire", email = "eliot.mcintire@canada.ca",
+    role = c("aut"), comment = c(ORCID = "0000-0002-6914-8316"))
     )
 Depends:
     R (>= 3.6)
