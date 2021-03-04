@@ -70,6 +70,8 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
   })
 
+  srch <- setdiff(srch, paste0("package:", c("SpaDES.install", Require::pkgDep("SpaDES.install"))))
+
   if (length(srch) > 0) {
     message("It looks like you may need to restart your R session to get an R session without ",
             "R packages loaded already. If you are using RStudio and you are unable to restart without",
