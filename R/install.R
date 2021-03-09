@@ -34,7 +34,7 @@ installGithubPackage <- function(gitRepo, libPath = .libPaths()[1]) {
     if (is.na(packageTarName)) { # linux didn't have that character
       packageTarName <- gsub(paste0("^.*(", gr$repo, ".*tar.gz).*$"), "\\1", buildingLine)
     }
-    system(paste0("R CMD INSTALL --library=", normalizePath(libPath, winslash = "/"), " ",packageTarName), wait = TRUE)
+    system(paste0("R CMD INSTALL --library=", normalizePath(libPath, winslash = "/"), " ", packageTarName), wait = TRUE)
   } else {
     message("Can't install packages this way because R is not on the search path")
   }
@@ -73,13 +73,16 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   srch <- setdiff(srch, paste0("package:", c("SpaDES.install", Require::pkgDep("SpaDES.install"))))
 
   if (length(srch) > 0) {
-    message("It looks like you may need to restart your R session to get an R session without ",
-            "R packages loaded already. If you are using RStudio and you are unable to restart without",
-            "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
-            " R session.")
+    message(
+      "It looks like you may need to restart your R session to get an R session without ",
+      "R packages loaded already. If you are using RStudio and you are unable to restart without",
+      "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
+      " R session."
+    )
     out <- readline("Do you want to proceed anyway? Y or N")
-    if (!identical("y", tolower(out)))
+    if (!identical("y", tolower(out))) {
       stop("Try to restart R with Ctrl-Alt-F10 if you are in RStudio")
+    }
   }
   writeable <- unlist(lapply(.libPaths(), file.access, mode = 2)) == 0
   args <- list(checkBuilt = TRUE, ask = ask)
@@ -88,8 +91,9 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     args$lib.loc <- libPathsForUpdate
   }
   isWin <- identical("windows", .Platform$OS.type)
-  if (isWin && missing(type))
+  if (isWin && missing(type)) {
     args$type <- "binary"
+  }
   olds <- do.call(old.packages, args)
   toUpdate <- setdiff(olds[, "Package"], dontUpdate)
   args[["pkgs"]] <- toUpdate
@@ -98,8 +102,9 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
 
   #  install
   args <- list(c("SpaDES.core", "SpaDES.tools"), dependencies = TRUE)
-  if (isWin && missing(type))
+  if (isWin && missing(type)) {
     args$type <- "binary"
+  }
 
   if (!isWin && !dir.exists(file.path(.libPaths()[1], "igraph"))) {
     # igraph needs to be installed from source
@@ -109,8 +114,9 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   versions <- versions[args[[1]]]
   whichOK <- unlist(lapply(seq(versions), function(ind) {
     ok <- (!identical(as.character(packageVersion(names(versions)[ind])), versions[ind]))
-    if (identical(ok, TRUE))
+    if (identical(ok, TRUE)) {
       message("skipping install of ", names(versions)[ind], "; version is OK")
+    }
     ok
   }))
   args[[1]] <- args[[1]][!whichOK]

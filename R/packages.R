@@ -21,8 +21,10 @@ utils::globalVariables(c("..colsToShow", "compareVersion"))
 #' makeSureAllPackagesInstalled(modulePath = "modules")
 #'
 #' # Multiple modulePath
-#' makeSureAllPackagesInstalled(c("~/GitHub/WBI_fireSense/modules/",
-#'                                "~/GitHub/SpaDES-modules/modules/"))
+#' makeSureAllPackagesInstalled(c(
+#'   "~/GitHub/WBI_fireSense/modules/",
+#'   "~/GitHub/SpaDES-modules/modules/"
+#' ))
 #' }
 makeSureAllPackagesInstalled <- function(modulePath) {
   AllPackagesFile <- "._AllPackages.rds" ## TODO: put this in proper place
@@ -49,8 +51,9 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     okVersions <- Require::getPkgVersions(out)
     okInstalled <- out$installed
     okVersion <- okVersions$compareVersion >= 0
-    if (anyNA(okVersion))
+    if (anyNA(okVersion)) {
       okVersion[is.na(okVersion)] <- TRUE
+    }
     data.table::setorderv(out, "Package")
     data.table::setnames(out, old = "Version", "InstalledVersion")
     colsToShow <- c("packageFullName", "Package", "InstalledVersion", "correctVersion")
@@ -74,25 +77,29 @@ makeSureAllPackagesInstalled <- function(modulePath) {
         reproducible::messageDF(print(out[needAction == TRUE]))
         stop("Restart R; Run this function again immediately.", call. = FALSE)
       }
-      Require::Require(out[needAction]$packageFullName, require = FALSE,
-                       upgrade = FALSE)
-
+      Require::Require(out[needAction]$packageFullName,
+        require = FALSE,
+        upgrade = FALSE
+      )
     } else {
-      message("All 'reqdPkgs' in the modules in ",paste(modulePath, collapse = ", "),
-              " are installed with correct version")
+      message(
+        "All 'reqdPkgs' in the modules in ", paste(modulePath, collapse = ", "),
+        " are installed with correct version"
+      )
     }
-
-
   } else {
     AllPackagesUnlisted <- readRDS(AllPackagesFile)
     uniquedPkgs <- unique(AllPackagesUnlisted$state$Package)
     uniquedPkgs <- setdiff(uniquedPkgs, Require:::.basePkgs)
     anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
 
-    if (any(anyLoaded))
-      stop("Some packages that need to be updated are still loaded; please restart R.",
-           "You may have to change your .Rprofile or Rstudio settings so ",
-           "packages don't get automatically loaded")
+    if (any(anyLoaded)) {
+      stop(
+        "Some packages that need to be updated are still loaded; please restart R.",
+        "You may have to change your .Rprofile or Rstudio settings so ",
+        "packages don't get automatically loaded"
+      )
+    }
     Require::Require(require = FALSE, AllPackagesUnlisted$AllPackagesUnlisted, upgrade = FALSE)
     unlink(AllPackagesFile)
   }
