@@ -48,9 +48,13 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     AllPackagesUnlisted <- unname(unlist(AllPackages))
     out <- Require::Require(require = FALSE, AllPackagesUnlisted, install = FALSE, verbose = TRUE)
     out <- attr(out, "Require")
-    okVersions <- Require::getPkgVersions(out)
+
+    # Note this will return NA if there is no version specification
+    okVersions <- Require::getPkgVersions(out, install = FALSE)
     okInstalled <- out$installed
     okVersion <- okVersions$compareVersion >= 0
+    if (length(okVersion) == 0)
+      okVersion <- rep(TRUE, length(okInstalled))
     if (anyNA(okVersion)) {
       okVersion[is.na(okVersion)] <- TRUE
     }
