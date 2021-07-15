@@ -61,7 +61,7 @@ installGitHubPackage <- installGithubPackage
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
-                          versions = c(SpaDES.core = "1.0.5", SpaDES.tools = "0.3.6"),
+                          versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
                           dontUpdate = c("scam")) {
   srch <- search()
   basePkgs <- dir(tail(.libPaths(), 1))
@@ -70,12 +70,17 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
   })
 
-  srch <- setdiff(srch, paste0("package:", c("SpaDES.install", Require::pkgDep("SpaDES.install"))))
+  srch <- setdiff(srch,
+                  paste0("package:",
+                         c("SpaDES.install",
+                           Require::extractPkgName(
+                             Require::pkgDep("SpaDES.install", recursive = TRUE)[[1]]))))
 
   if (length(srch) > 0) {
     message(
       "It looks like you may need to restart your R session to get an R session without ",
-      "R packages loaded already. If you are using RStudio and you are unable to restart without",
+      "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+      "If you are using RStudio and you are unable to restart without",
       "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
       " R session."
     )
@@ -95,10 +100,12 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     args$type <- "binary"
   }
   olds <- do.call(old.packages, args)
-  toUpdate <- setdiff(olds[, "Package"], dontUpdate)
-  args[["pkgs"]] <- toUpdate
-  args[["dependencies"]] <- FALSE
-  do.call(install.packages, args)
+  if (!is.null(olds)) {
+    toUpdate <- setdiff(olds[, "Package"], dontUpdate)
+    args[["pkgs"]] <- toUpdate
+    args[["dependencies"]] <- FALSE
+    do.call(install.packages, args)
+  }
 
   #  install
   args <- list(c("SpaDES.core", "SpaDES.tools"), dependencies = TRUE)
@@ -112,14 +119,18 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   }
   ip <- installed.packages()
   versions <- versions[args[[1]]]
-  whichOK <- unlist(lapply(seq(versions), function(ind) {
-    ok <- (!identical(as.character(packageVersion(names(versions)[ind])), versions[ind]))
-    if (identical(ok, TRUE)) {
-      message("skipping install of ", names(versions)[ind], "; version is OK")
-    }
-    ok
-  }))
-  args[[1]] <- args[[1]][!whichOK]
+  alreadyInstalled <- names(versions) %in% rownames(ip)
+  if (any(alreadyInstalled)) {
+    versions <- versions[!alreadyInstalled]
+    whichOK <- unlist(lapply(seq(versions), function(ind) {
+      ok <- (!identical(as.character(packageVersion(names(versions)[ind])), versions[ind]))
+      if (identical(ok, TRUE)) {
+        message("skipping install of ", names(versions)[ind], "; version is OK")
+      }
+      ok
+    }))
+    args[[1]] <- args[[1]][!whichOK]
+  }
 
   if (length(args[[1]])) {
     do.call(install.packages, args)
