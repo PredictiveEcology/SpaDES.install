@@ -11,7 +11,9 @@
 #'
 #' @export
 #' @importFrom utils download.file unzip
-getModule <- function(gitRepo, overwrite = FALSE, modulePath = ".") {
+getModule <- function(gitRepo, overwrite = FALSE, modulePath) {
+  if (missing(modulePath)) modulePath <- getOption("spades.modulePath")
+  if (is.null(modulePath)) modulePath <- "."
   if (!dir.exists(modulePath)) dir.create(modulePath, recursive = TRUE)
   gr <- splitGitRepo(gitRepo)
   ar <- file.path(gr$acct, gr$repo)
@@ -34,7 +36,8 @@ getModule <- function(gitRepo, overwrite = FALSE, modulePath = ".") {
       stop(repoFull, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
     }
   }
-  badDirname <- unique(dirname(out))[1]
+  dirnames <- dirname(out)
+  badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
   file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
   unlink(zipFileName)
   message(gitRepo, " downloaded and placed in ", normalizePath(repoFull, winslash = "/"))

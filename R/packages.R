@@ -27,6 +27,8 @@ utils::globalVariables(c("..colsToShow", "compareVersion"))
 #' ))
 #' }
 makeSureAllPackagesInstalled <- function(modulePath) {
+  if (missing(modulePath)) modulePath <- getOption("spades.modulePath")
+  if (is.null(modulePath)) stop("modulePath must be supplied")
   AllPackagesFile <- "._AllPackages.rds" ## TODO: put this in proper place
   if (!file.exists(AllPackagesFile)) {
     names(modulePath) <- modulePath
