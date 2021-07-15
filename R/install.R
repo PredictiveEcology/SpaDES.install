@@ -126,7 +126,7 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   versions <- versions[args[[1]]]
   alreadyInstalled <- names(versions) %in% rownames(ip)
   if (any(alreadyInstalled)) {
-    versions <- versions[!alreadyInstalled]
+    versions <- versions[alreadyInstalled]
     whichOK <- unlist(lapply(seq(versions), function(ind) {
       ok <- (!identical(as.character(packageVersion(names(versions)[ind])), versions[ind]))
       if (identical(ok, TRUE)) {
@@ -141,9 +141,14 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     do.call(install.packages, args)
   }
   if (isTRUE(SpaDES.project)) {
-    output <- capture.output(out <- install.packages("SpaDES.project", repos = 'https://predictiveecology.r-universe.dev'))
-    if (any(grepl("not available", output)))
-      out <- Require::Require("PredictiveEcology/SpaDES.project", require = FALSE)
+    tf <- tempfile();
+    download.file("https://raw.githubusercontent.com/r-universe/predictiveecology/master/.remotes.json",
+                  destfile = tf)
+    out <- readLines(tf)
+    if (any(grepl("SpaDES.project", out)))
+      install.packages("SpaDES.project", repos = 'https://predictiveecology.r-universe.dev')
+    else
+      out <- Require::Require("PredictiveEcology/SpaDES.project", require = FALSE, upgrade = FALSE)
   }
 
   return(invisible())
