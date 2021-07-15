@@ -8,8 +8,9 @@ installSpaDES(
   ask = FALSE,
   type,
   libPath = .libPaths()[1],
-  versions = c(SpaDES.core = "1.0.5", SpaDES.tools = "0.3.6"),
-  dontUpdate = c("scam")
+  versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
+  dontUpdate = c("scam"),
+  SpaDES.project = TRUE
 )
 }
 \arguments{
@@ -24,6 +25,11 @@ This will set \code{"binary"} on Windows, if not set, to get the binary packages
 \item{versions}{named list of package versions to install}
 
 \item{dontUpdate}{character vector of packages not to update}
+
+\item{SpaDES.project}{logical. If TRUE, the default, then the SpaDES.project will
+also be installed. This is not on CRAN. It will first attempt to install from
+predictiveecology.r-universe.dev. If that fails, then it will install from source
+from github.com/PredictiveEcology/SpaDES.project}
 }
 \description{
 Install SpaDES packages, making sure to \code{update.packages} first

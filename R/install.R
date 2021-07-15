@@ -58,11 +58,16 @@ installGitHubPackage <- installGithubPackage
 #'
 #' @param dontUpdate character vector of packages not to update
 #'
+#' @param SpaDES.project logical. If TRUE, the default, then the SpaDES.project will
+#'   also be installed. This is not on CRAN. It will first attempt to install from
+#'   predictiveecology.r-universe.dev. If that fails, then it will install from source
+#'   from github.com/PredictiveEcology/SpaDES.project
+#'
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
                           versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
-                          dontUpdate = c("scam")) {
+                          dontUpdate = c("scam"), SpaDES.project = TRUE) {
   srch <- search()
   basePkgs <- dir(tail(.libPaths(), 1))
   basePkgs <- c(basePkgs, "GlobalEnv", "Autoloads")
@@ -135,5 +140,11 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   if (length(args[[1]])) {
     do.call(install.packages, args)
   }
+  if (isTRUE(SpaDES.project)) {
+    output <- capture.output(out <- install.packages("SpaDES.project", repos = 'https://predictiveecology.r-universe.dev'))
+    if (any(grepl("not available", output)))
+      out <- Require::Require("PredictiveEcology/SpaDES.project", require = FALSE)
+  }
+
   return(invisible())
 }

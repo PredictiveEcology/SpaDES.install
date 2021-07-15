@@ -22,7 +22,9 @@ It will prompt.
 makeSureAllPackagesInstalled(modulePath = "modules")
 
 # Multiple modulePath
-makeSureAllPackagesInstalled(c("~/GitHub/WBI_fireSense/modules/",
-                               "~/GitHub/SpaDES-modules/modules/"))
+makeSureAllPackagesInstalled(c(
+  "~/GitHub/WBI_fireSense/modules/",
+  "~/GitHub/SpaDES-modules/modules/"
+))
 }
 }
