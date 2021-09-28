@@ -4,7 +4,7 @@
 \alias{getModule}
 \title{Simple function to download a SpaDES module as GitHub repository}
 \usage{
-getModule(gitRepo, overwrite = FALSE, modulePath = ".")
+getModule(gitRepo, overwrite = FALSE, modulePath)
 }
 \arguments{
 \item{gitRepo}{A github repository, presented in the standard R way, with

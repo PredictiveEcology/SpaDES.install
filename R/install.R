@@ -153,3 +153,34 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
 
   return(invisible())
 }
+
+#' Install spatial packages
+#'
+#' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
+#' liked to these external libraries.
+#'
+#' @param repos URL of CRAN mirror to use to fetch source packages
+#'
+#' @note if installing on macOS, homebrew installation of GDAL etc. is required.
+#'
+#' @export
+installSpatialPackages <- function(repos = "https://cran.rstudio.com") {
+  ## rgdal and sf need additional args for homebrew on macOS
+  if (Sys.info()[["sysname"]] == "Darwin") {
+    stopifnot(nzchar(Sys.which("brew")))
+
+    install.packages("rgdal", type = "source", repos = repos,
+                     configure.args = c("--with-proj-lib=/usr/local/lib/",
+                                        "--with-proj-include=/usr/local/include/"))
+    install.packages("sf", type = "source", repos = repos,
+                     configure.args = "--with-proj-lib=/usr/local/lib/")
+  } else {
+    install.packages("rgdal", type = "source", repos = repos)
+    install.packages("sf", type = "source", repos = "https://cran.rstudio.com")
+  }
+
+  # other spatial packages ----------------------------------------------------------------------
+
+  otherSpatialPackages <- c("rgeos", "sp", "raster", "terra", "lwgeom")
+  install.packages(otherSpatialPackages, type = "source", repos = repos)
+}

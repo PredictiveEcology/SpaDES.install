@@ -1,4 +1,4 @@
-utils::globalVariables(c("..colsToShow", "compareVersion"))
+utils::globalVariables(c(":=", "..colsToShow", "compareVersion"))
 
 #' Pre-test for packages in SpaDES modules
 #'
@@ -14,7 +14,7 @@ utils::globalVariables(c("..colsToShow", "compareVersion"))
 #' @export
 #' @importFrom data.table setnames setorderv
 #' @importFrom Require getPkgVersions Require
-#' @importFrom utils install.packages packageVersion
+#' @importFrom utils getFromNamespace install.packages packageVersion
 #'
 #' @examples
 #' \dontrun{
@@ -96,7 +96,7 @@ makeSureAllPackagesInstalled <- function(modulePath) {
   } else {
     AllPackagesUnlisted <- readRDS(AllPackagesFile)
     uniquedPkgs <- unique(AllPackagesUnlisted$state$Package)
-    uniquedPkgs <- setdiff(uniquedPkgs, Require:::.basePkgs)
+    uniquedPkgs <- setdiff(uniquedPkgs, getFromNamespace(".basePkgs", "Require"))
     anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
 
     if (any(anyLoaded)) {

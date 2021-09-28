@@ -6,8 +6,7 @@
 \alias{SpaDES.install-package}
 \title{Helpers for installing \code{SpaDES} package and module dependencies}
 \description{
-More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+More about what it does (maybe more than one line) Use four spaces when indenting paragraphs within the Description.
 }
 \seealso{
 Useful links:
@@ -19,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Alex M Chubaty \email{alex.chubaty@gmail.com} (\href{https://orcid.org/0000-0001-7146-8135}{ORCID})
+\strong{Maintainer}: Alex M Chubaty \email{achubaty@for-cast.ca} (\href{https://orcid.org/0000-0001-7146-8135}{ORCID})
 
 Authors:
 \itemize{
