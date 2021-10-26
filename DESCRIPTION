@@ -6,8 +6,8 @@ Description: More about what it does (maybe more than one line)
 URL:
     https://spades-install.predictiveecology.org/,
     https://github.com/PredictiveEcology/SpaDES.install
-Date: 2021-09-28
-Version: 0.0.4.9002
+Date: 2021-10-26
+Version: 0.0.5
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
