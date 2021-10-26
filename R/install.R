@@ -75,11 +75,13 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
   })
 
+  SpaDES.installDeps <- Require::extractPkgName(
+    Require::pkgDep("SpaDES.install", recursive = TRUE)[[1]]
+  )
   srch <- setdiff(srch,
                   paste0("package:",
                          c("SpaDES.install",
-                           Require::extractPkgName(
-                             Require::pkgDep("SpaDES.install", recursive = TRUE)[[1]]))))
+                             SpaDES.installDeps)))
 
   if (length(srch) > 0) {
     message(
@@ -106,10 +108,18 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   }
   olds <- do.call(old.packages, args)
   if (!is.null(olds)) {
+
+    # Don't try to update the dependencies of SpaDES.install (which are currently Require, data.table, remotes)
     toUpdate <- setdiff(olds[, "Package"], dontUpdate)
-    args[["pkgs"]] <- toUpdate
-    args[["dependencies"]] <- FALSE
-    do.call(install.packages, args)
+    dontUpdate <- intersect(SpaDES.installDeps, toUpdate)
+    if (length(dontUpdate)) {
+      toUpdate <- setdiff(toUpdate, dontUpdate)
+    }
+    if (length(toUpdate)) {
+      args[["pkgs"]] <- toUpdate
+      args[["dependencies"]] <- FALSE
+      do.call(install.packages, args)
+    }
   }
 
   #  install
