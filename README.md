@@ -25,8 +25,6 @@ Require::setLibPaths("projectRPackages")
 ## RESTART R -- START WITH A CLEAN SESSION ##
 if (!require("Require")) {install.packages("Require"); library(Require)}
 Require("PredictiveEcology/SpaDES.install (>= 0.0.5)") # install/load this package
-installSpaDES()
-
 ```
 
 
