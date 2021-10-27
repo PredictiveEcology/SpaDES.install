@@ -1,6 +1,12 @@
 splitGitRepo <- function(gitRepo) {
   grSplit <- strsplit(gitRepo, "/|@")[[1]]
-  acct <- grSplit[[1]]
+  grAcct <- strsplit(gitRepo, "/")[[1]] # only account and repo
+  if (length(grAcct) == 1) {
+    acct <- "PredictiveEcology"
+    grSplit <- append(list(acct), grSplit)
+  } else {
+    acct <- grSplit[[1]]
+  }
   repo <- grSplit[[2]]
   if (length(grSplit) > 2) {
     br <- grSplit[[3]]

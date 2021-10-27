@@ -1,13 +1,15 @@
 #' Simple function to download a SpaDES module as GitHub repository
 #'
 #' @param gitRepo A github repository, presented in the standard R way, with
-#'   `account/repository@branch`
+#'   `account/repository@branch`. If `account` is omitted, then `"PredictiveEcology` will
+#'   be assumed.
 #' @param overwrite Logical. If \code{TRUE}, then the download will delete any
 #'   existing folder with the same name as the \code{repository}
 #'   provided in \code{gitRepo}
 #' @param modulePath A local path in which to place the full module, within
 #'   a subfolder ... i.e., the source code will be downloaded to here:
-#'   \code{file.path(modulePath, repository)}
+#'   \code{file.path(modulePath, repository)}. If omitted, and `options(spades.modulePath)` is
+#'   set, it will use `getOption("spades.modulePath")`, otherwise it will use `"."`.
 #'
 #' @export
 #' @importFrom utils download.file unzip
