@@ -80,13 +80,13 @@ makeSureAllPackagesInstalled(modulePath)
 
 # Top of each script -- for reproducibility
 
-We have started placing these lines at the top of our scripts, so that we can quickly get everything up and running on any new computer, or with any new person that collaborates on the project.
+We have started placing something such as these lines at the top of our scripts, so that we can quickly get everything up and running on any new computer, or with any new person that collaborates on the project.
 
 ```
 if (!require("Require")) {install.packages("Require"); library(Require)}
-Require("PredictiveEcology/SpaDES.install") # install/load this package
 needInstallOrUpdate <- FALSE # change to TRUE for first time or periodic updating
 if (needInstallOrUpdate) {
+  Require("PredictiveEcology/SpaDES.install") # install/load this package
   installSpaDES()
   makeSureAllPackagesInstalled("modules")
 }
