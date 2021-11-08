@@ -83,13 +83,11 @@ makeSureAllPackagesInstalled(modulePath)
 We have started placing something such as these lines at the top of our scripts, so that we can quickly get everything up and running on any new computer, or with any new person that collaborates on the project.
 
 ```
+.libPaths("~/tempRPackages/4.1") # put R package path for project here
 if (!require("Require")) {install.packages("Require"); library(Require)}
-needInstallOrUpdate <- FALSE # change to TRUE for first time or periodic updating
-if (needInstallOrUpdate) {
-  Require("PredictiveEcology/SpaDES.install") # install/load this package
-  installSpaDES()
-  makeSureAllPackagesInstalled("modules")
-}
+Require("PredictiveEcology/SpaDES.install") # install/load this package
+installSpaDES()                             # install/load these packages
+makeSureAllPackagesInstalled("modules")     # install/load these packages
 ```
 
 

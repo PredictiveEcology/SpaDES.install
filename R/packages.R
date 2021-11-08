@@ -33,6 +33,7 @@ makeSureAllPackagesInstalled <- function(modulePath) {
   if (!file.exists(AllPackagesFile)) {
     names(modulePath) <- modulePath
     AllModules <- lapply(modulePath, dir)
+    if (length(unlist(AllModules)) == 0) return("No modules in that modulePath. All clear.")
     # AllModules <- dir(modulePath)
     msg <- capture.output(type = "message",
                           hasSC <- requireNamespace("SpaDES.core"))
