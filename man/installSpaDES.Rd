@@ -19,7 +19,7 @@ installSpaDES(
 \item{ask}{Passed to \code{update.packages}.}
 
 \item{type}{passed to both \code{update.packages} and \code{install.packages}.
-This will set \code{"binary"} on Windows, if not set, to get the binary packages from CRAN.}
+This will be set to \code{"binary"} on Windows, if not set, to get the binary packages from CRAN.}
 
 \item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
 \code{install.packages(lib = libPath, ...)}}

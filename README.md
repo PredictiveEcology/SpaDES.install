@@ -3,7 +3,7 @@ The [SpaDES ecosystem](https://spades.predictiveecology.org) is comprised of sev
 There are 4 steps:
 
 1. Decide if R packages are going to installed in a separate folder for this project.
-2. Install `SpaDES.install` R package --> this helps deal with package dependencies
+2. Install `Require` and `SpaDES.install` R packages --> these help deal with package dependencies
 3. Install any desired or missing *SpaDES modules*
 4. Install R packages (the SpaDES R packages and dependencies PLUS the SpaDES modules R packages and dependencies)
 
@@ -14,44 +14,68 @@ We outline each of these below. This package is new and is still being actively 
 In many cases, it is desirable to separate the packages that are installed for each project, even on the same computer. 
 To do this, use either R's built in tool, `.libPaths("projectRPackages")`, but this must be placed at the top of a (main) project script, or use `Require::setLibPaths("projectRPackages")`, which will set it for the project, reminding the user that it is set each time R restarts.
 
+## 1. Keep R packages separate? (this is not necessary, but can be useful) 
+☻
 ```
-# Optional 
-Require::setLibPaths("projectRPackages")
+userRlib = "~/tempRPackages/4.1" # important to specify version here ... things may not work as expected below if omitted
+if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
+.libPaths(userRlib)
 ```
 
-## Install `SpaDES.install` R package
+## 2. Install `Require` and `SpaDES.install` packages
 
 ```
-## RESTART R -- START WITH A CLEAN SESSION ##
+# optionally set a repo for binary linux packages (works also for Windows, but unnecessary)
+#  This will be WAY faster to install everything
+# options(repos = c(CRAN = paste0("https://packagemanager.rstudio.com/all/__linux__/focal/latest")))
+# If using an older Linux, you will have to replace the "focal" on previous line with the value here:
+# version = strsplit(system("lsb_release -c", intern = TRUE), ":\t")[[1]][[2]]
+
+# Install R packages 
+# First: Require 
 if (!require("Require")) {install.packages("Require"); library(Require)}
-Require("PredictiveEcology/SpaDES.install (>= 0.0.5)") # install/load this package
+# Second: SpaDES.install
+Require("PredictiveEcology/SpaDES.install (>= 0.0.5.9002)", dependencies = FALSE) # install/load this package
+# Last -- All others -- this will correctly install from source the spatial R packages + igraph
+installSpaDES()
 ```
 
 
-## Install desired or missing *SpaDES modules*
+## 3. Install desired or missing *SpaDES modules*
 
 You can install modules in various ways. The easiest is to identify their repository (on Github.com), such as `"PredictiveEcology/Biomass_core"`, and decide on a folder (`modulePath`) to install your modules, then install it or them with:
+
+
 ```
+# Set a path
 modulePath = "modules"
-getModule("PredictiveEcology/Biomass_core", modulePath = modulePath)
-getModule("PredictiveEcology/Biomass_regeneration", modulePath = modulePath)
+# Download them
+if (!dir.exists(file.path(modulePath, "Biomass_core"))) {
+  getModule("PredictiveEcology/Biomass_core", modulePath = modulePath) 
+  # If you want a specific branch:
+	# getModule("PredictiveEcology/Biomass_core@development", modulePath = modulePath) 
+	getModule("PredictiveEcology/Biomass_regeneration", modulePath = modulePath)
+}
 ```
 
 These will have been installed in your selected path. 
 
-There is [a wiki that lists many of the modules](https://github.com/PredictiveEcology/SpaDES-modules/wiki/Current-modules-in-development).
+There is [a wiki that lists many of some modules that we are currently aware of](https://github.com/PredictiveEcology/SpaDES-modules/wiki/Current-modules-in-development).
 
-## Installing R packages
+
+## 4. Install R packages for these modules
+
 
 `SpaDES` is an R package that has many dependencies. Because of all the dependencies, it may not work to simply use `install.packages("SpaDES")`. Instead, we have made `installSpaDES()` to deal with many of the challenges we have encountered.
 
 *SpaDES modules* are written by different people and have their own R package dependencies, often different than `SpaDES`. These too need to be installed, version numbers checked, and conflicting version number needs identified. We created `makeSureAllPackagesInstalled` to address many of the potential problems that could be faced.
 
 ```
-# these functions are part of SpaDES.install package
-installSpaDES() 
-makeSureAllPackagesInstalled(modulePath) # modulePath is defined in previous code block
+# modulePath is defined in previous chunk
+makeSureAllPackagesInstalled(modulePath)
 ```
+
+
 
 
 # Top of each script -- for reproducibility
