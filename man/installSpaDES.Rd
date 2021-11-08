@@ -8,6 +8,8 @@ installSpaDES(
   ask = FALSE,
   type,
   libPath = .libPaths()[1],
+  fromSource = c("rgeos", "rgdal", "terra", "sf", "units", "qs", "sp", "Rcpp",
+    "RcppParallel", "cpp11"),
   versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
   dontUpdate = c("scam"),
   SpaDES.project = TRUE
@@ -21,6 +23,11 @@ This will set \code{"binary"} on Windows, if not set, to get the binary packages
 
 \item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
 \code{install.packages(lib = libPath, ...)}}
+
+\item{fromSource}{A character vector of packages that must be installed from
+source on Linux-alikes, even if the \code{options("repos")} is pointing to a binary
+repository of binary packages. The default is all the spatial packages, plus
+a few others. Has no effect if}
 
 \item{versions}{named list of package versions to install}
 

@@ -6,7 +6,8 @@
 \alias{SpaDES.install-package}
 \title{Helpers for installing \code{SpaDES} package and module dependencies}
 \description{
-More about what it does (maybe more than one line) Use four spaces when indenting paragraphs within the Description.
+More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
 }
 \seealso{
 Useful links:
