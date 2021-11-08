@@ -1,5 +1,11 @@
 Known issues: https://github.com/PredictiveEcology/SpaDES.install/issues
 
+version 0.0.6
+=============
+
+* Assume `PredictiveEcology` account when not specified in using `getModule`
+* update documentation
+
 version 0.0.5
 =============
 
