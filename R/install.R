@@ -51,6 +51,11 @@ installGitHubPackage <- installGithubPackage
 #' @param type passed to both `update.packages` and `install.packages`.
 #'   This will set `"binary"` on Windows, if not set, to get the binary packages from CRAN.
 #'
+#' @param fromSource A character vector of packages that must be installed from
+#'    source on Linux-alikes, even if the `options("repos")` is pointing to a binary
+#'    repository of binary packages. The default is all the spatial packages, plus
+#'    a few others. Has no effect if
+#'
 #' @param libPath Passed to both `update.packages(lib.lob = libPath)` and
 #'   `install.packages(lib = libPath, ...)`
 #'
@@ -66,6 +71,8 @@ installGitHubPackage <- installGithubPackage
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
+                          fromSource = c("rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
+                                         "Rcpp", "RcppParallel", "cpp11"),
                           versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
                           dontUpdate = c("scam"), SpaDES.project = TRUE) {
   srch <- search()
@@ -128,9 +135,14 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     args$type <- "binary"
   }
 
-  if (!isWin && !dir.exists(file.path(.libPaths()[1], "igraph"))) {
-    # igraph needs to be installed from source
-    install.packages("igraph", type = "source", lib = libPath, repos = "https://cran.rstudio.com")
+  if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
+    deps <- Require::pkgDep(fromSource)
+
+    depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
+    depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
+    depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
+    install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
+    install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
   }
   ip <- installed.packages()
   versions <- versions[args[[1]]]
