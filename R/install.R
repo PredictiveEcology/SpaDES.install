@@ -71,7 +71,7 @@ installGitHubPackage <- installGithubPackage
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
-                          fromSource = c("rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
+                          fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
                                          "Rcpp", "RcppParallel", "cpp11"),
                           versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
                           dontUpdate = c("scam"), SpaDES.project = TRUE) {
