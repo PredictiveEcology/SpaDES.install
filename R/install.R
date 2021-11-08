@@ -55,7 +55,7 @@ installGitHubPackage <- installGithubPackage
 #' @param ask Passed to `update.packages`.
 #'
 #' @param type passed to both `update.packages` and `install.packages`.
-#'   This will set `"binary"` on Windows, if not set, to get the binary packages from CRAN.
+#'   This will be set to `"binary"` on Windows, if not set, to get the binary packages from CRAN.
 #'
 #' @param fromSource A character vector of packages that must be installed from
 #'    source on Linux-alikes, even if the `options("repos")` is pointing to a binary
@@ -142,12 +142,14 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   }
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
-    deps <- Require::pkgDep(fromSource)
 
     depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
     depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
     depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
+
+    # Binary first
     install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
+    # Source second
     install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
   }
   ip <- installed.packages()
@@ -189,11 +191,22 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
 #'
 #' @param repos URL of CRAN mirror to use to fetch source packages
 #'
+#' @param pkgs Character vector of package names to install using `type = "source"`
+#'
+#' @param forceWindows Logical. If `TRUE`, then this will install from source on Windows,
+#'   which is often unnecessary for e.g., spatial packages.
+#'
+#' @inheritParams installSpaDES
+#'
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
 #' @export
-installSpatialPackages <- function(repos = "https://cran.rstudio.com") {
+installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"),
+                                   repos = "https://cloud.r-project.org",
+                                   libPath = .libPaths()[1],
+                                   forceWindows = FALSE) {
   ## rgdal and sf need additional args for homebrew on macOS
+  origPkgs <- pkgs
   if (Sys.info()[["sysname"]] == "Darwin") {
     stopifnot(nzchar(Sys.which("brew")))
 
@@ -202,13 +215,49 @@ installSpatialPackages <- function(repos = "https://cran.rstudio.com") {
                                         "--with-proj-include=/usr/local/include/"))
     install.packages("sf", type = "source", repos = repos,
                      configure.args = "--with-proj-lib=/usr/local/lib/")
-  } else {
-    install.packages("rgdal", type = "source", repos = repos)
-    install.packages("sf", type = "source", repos = "https://cran.rstudio.com")
+    pkgs <- setdiff(pkgs, c("rgdal", "sf"))
   }
+  installSourcePackages(pkgs, repos = repos, libPath = libPath, forceWindows = forceWindows)
 
-  # other spatial packages ----------------------------------------------------------------------
+  return(invisible())
+}
 
-  otherSpatialPackages <- c("rgeos", "sp", "raster", "terra", "lwgeom")
-  install.packages(otherSpatialPackages, type = "source", repos = repos)
+
+
+#' Install spatial packages
+#'
+#' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
+#' liked to these external libraries.
+#'
+#' @param repos URL of CRAN mirror to use to fetch source packages
+#'
+#' @note if installing on macOS, homebrew installation of GDAL etc. is required.
+#'
+#' @export
+installSourcePackages <- function(pkgs = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
+                                           "igraph", "units", "qs",
+                                           "Rcpp", "RcppParallel", "cpp11"),
+                                  libPath = .libPaths()[1],
+                                  repos = "https://cloud.r-project.org",
+                                  forceWindows = FALSE) {
+
+  depsCleanUniq <- extractDepsOnly(pkgs)
+
+  if (Require:::isWindows() && !isTRUE(forceWindows)) {
+    install.packages(unique(c(depsCleanUniq, pkgs)),
+                     lib = libPath, repos = repos)
+  } else {
+    # Binary first
+    install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath, repos = repos)
+    # Source second
+    install.packages(pkgs, type = "source", lib = libPath, repos = repos)
+  }
+  # install.packages(pkgs, type = "source", repos = repos)
+}
+
+extractDepsOnly <- function(pkgs) {
+  depsClean <- unlist(unname(Require::pkgDep(pkgs, recursive = TRUE)))
+  depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
+  depsCleanUniq <- setdiff(depsCleanUniq, pkgs)
+  depsCleanUniq
 }

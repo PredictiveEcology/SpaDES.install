@@ -3,6 +3,7 @@
 export(getModule)
 export(installGitHubPackage)
 export(installGithubPackage)
+export(installSourcePackages)
 export(installSpaDES)
 export(installSpatialPackages)
 export(makeSureAllPackagesInstalled)
