@@ -34,10 +34,18 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     names(modulePath) <- modulePath
     AllModules <- lapply(modulePath, dir)
     # AllModules <- dir(modulePath)
-    if (!requireNamespace("SpaDES.core", quietly = TRUE)) {
+    msg <- capture.output(type = "message",
+                          hasSC <- requireNamespace("SpaDES.core"))
+    if (!hasSC) {
       ## installing SpaDES.core will also install reproducible
-      message("Need to install SpaDES.core from CRAN to continue")
-      Require("SpaDES.core")
+      if (any(grepl("there is no package.*SpaDES.core", msg))) {
+        message("Need to install SpaDES.core from CRAN to continue")
+      } else if (any(grepl("there is no package", msg))) {
+        message(paste(msg, collapse = "\n"))
+        message("Some dependencies of SpaDES.core are missing; installing those")
+      }
+
+      out <- Require("SpaDES.core", require = FALSE, install = TRUE)
     }
     AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
       message(mp)
