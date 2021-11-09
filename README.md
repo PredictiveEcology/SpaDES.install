@@ -3,9 +3,9 @@ The [SpaDES ecosystem](https://spades.predictiveecology.org) is comprised of sev
 There are 4 steps:
 
 1. Decide if R packages are going to installed in a separate folder for this project.
-2. Install `Require` and `SpaDES.install` R packages --> these help deal with package dependencies
+2. Install R packages for SpaDES-family --> these help deal with package dependencies
 3. Install any desired or missing *SpaDES modules*
-4. Install R packages (the SpaDES R packages and dependencies PLUS the SpaDES modules R packages and dependencies)
+4. Install R packages for modules
 
 We outline each of these below. This package is new and is still being actively tested, updated, maintained.
 
@@ -22,7 +22,9 @@ if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
 .libPaths(userRlib)
 ```
 
-## 2. Install `Require` and `SpaDES.install` packages
+## 2. Install R packages for SpaDES-family
+
+`SpaDES` is an R package that has many dependencies. Because of all the dependencies, it may not work to simply use `install.packages("SpaDES")`. Instead, we have made `installSpaDES()` to deal with many of the challenges we have encountered. Rstudio has several features that "automatically" load R packages (without user knowledge). It will be difficult to update these, once they are loaded in RStudio. We recommend, if possible, to do these initial steps outside of RStudio.
 
 ```
 # optionally set a repo for binary linux packages (works also for Windows, but unnecessary)
@@ -31,11 +33,12 @@ if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
 # If using an older Linux, you will have to replace the "focal" on previous line with the value here:
 # version = strsplit(system("lsb_release -c", intern = TRUE), ":\t")[[1]][[2]]
 
+# ------ RESTART R --------
 # Install R packages 
 # First: Require 
 if (!require("Require")) {install.packages("Require"); library(Require)}
 # Second: SpaDES.install
-Require("PredictiveEcology/SpaDES.install (>= 0.0.5.9005)", dependencies = NA) # install/load this package
+Require("PredictiveEcology/SpaDES.install (>= 0.0.5.9006)", dependencies = NA) # install/load this package
 # Last -- All others -- this will correctly install from source the spatial R packages + igraph
 installSpaDES()
 ```
@@ -63,10 +66,8 @@ These will have been installed in your selected path.
 There is [a wiki that lists many of some modules that we are currently aware of](https://github.com/PredictiveEcology/SpaDES-modules/wiki/Current-modules-in-development).
 
 
-## 4. Install R packages for these modules
+## 4. Install R packages for modules
 
-
-`SpaDES` is an R package that has many dependencies. Because of all the dependencies, it may not work to simply use `install.packages("SpaDES")`. Instead, we have made `installSpaDES()` to deal with many of the challenges we have encountered.
 
 *SpaDES modules* are written by different people and have their own R package dependencies, often different than `SpaDES`. These too need to be installed, version numbers checked, and conflicting version number needs identified. We created `makeSureAllPackagesInstalled` to address many of the potential problems that could be faced.
 
