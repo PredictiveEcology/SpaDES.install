@@ -17,6 +17,8 @@ To do this, use either R's built in tool, `.libPaths("projectRPackages")`, but t
 ## 1. Keep R packages separate? (this is not necessary, but can be useful) 
 
 ```
+# ------ RESTART R --------
+
 userRlib = "~/tempRPackages/4.1" # important to specify version here ... things may not work as expected below if omitted
 if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
 .libPaths(userRlib)
@@ -33,7 +35,6 @@ if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
 # If using an older Linux, you will have to replace the "focal" on previous line with the value here:
 # version = strsplit(system("lsb_release -c", intern = TRUE), ":\t")[[1]][[2]]
 
-# ------ RESTART R --------
 # Install R packages 
 # First: Require 
 if (!require("Require")) {install.packages("Require"); library(Require)}
