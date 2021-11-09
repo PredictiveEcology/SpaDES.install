@@ -1,7 +1,8 @@
 The [SpaDES ecosystem](https://spades.predictiveecology.org) is comprised of several packages (the `SpaDES` packages), and with those packages, one can make modules (`SpaDES` modules). There are a large number of package dependencies in both types, and as a result, there are many potential hurdles to getting correctly set up. This package provides a lightweight toolkit to help with setting up the R packages and modules for a project.
 
-There are 4 steps:
+There are 4 or 5 steps:
 
+0. If not on Windows, SpaDES needs [system libraries for spatial tools](https://github.com/PredictiveEcology/SpaDES/wiki/Installation). Please make sure these are installed before proceeding. 
 1. Decide if R packages are going to installed in a separate folder for this project.
 2. Install R packages for SpaDES-family --> these help deal with package dependencies
 3. Install any desired or missing *SpaDES modules*
