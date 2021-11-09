@@ -15,7 +15,7 @@ In many cases, it is desirable to separate the packages that are installed for e
 To do this, use either R's built in tool, `.libPaths("projectRPackages")`, but this must be placed at the top of a (main) project script, or use `Require::setLibPaths("projectRPackages")`, which will set it for the project, reminding the user that it is set each time R restarts.
 
 ## 1. Keep R packages separate? (this is not necessary, but can be useful) 
-☻
+
 ```
 userRlib = "~/tempRPackages/4.1" # important to specify version here ... things may not work as expected below if omitted
 if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
