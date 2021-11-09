@@ -80,14 +80,14 @@ makeSureAllPackagesInstalled(modulePath)
 
 # Top of each script -- for reproducibility
 
-We have started placing something such as these lines at the top of our scripts, so that we can quickly get everything up and running on any new computer, or with any new person that collaborates on the project.
+We have started placing something such as these lines at the top of our scripts, so that we can quickly get everything up and running on any new computer, or with any new person that collaborates on the project. This may take several seconds, depending on the number of modules. This time is mostly for loading `SpaDES.core`, which is a step that will have to happen eventually and so is not "lost" if this block is kept in a script and run every time.
 
 ```
 .libPaths("~/tempRPackages/4.1") # put R package path for project here
 if (!require("Require")) {install.packages("Require"); library(Require)}
 Require("PredictiveEcology/SpaDES.install") # install/load this package
-installSpaDES()                             # install/load these packages
-makeSureAllPackagesInstalled("modules")     # install/load these packages
+installSpaDES()                             # install missing packages
+makeSureAllPackagesInstalled("modules")     # install missing packages
 ```
 
 

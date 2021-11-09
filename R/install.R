@@ -1,3 +1,6 @@
+.pkgEnv <- new.env(parent = emptyenv())
+
+
 splitGitRepo <- function(gitRepo) {
   grSplit <- strsplit(gitRepo, "/|@")[[1]]
   grAcct <- strsplit(gitRepo, "/")[[1]] # only account and repo
@@ -119,7 +122,24 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   if (isWin && missing(type)) {
     args$type <- "binary"
   }
-  olds <- do.call(old.packages, args)
+
+  hasOlds <- ls(envir = .pkgEnv, pattern = "olds")
+  needNew <- TRUE
+  if (length(hasOlds) > 0) {
+    now <- Sys.time()
+    oldTime <- strsplit(hasOlds, "__")[[1]][2]
+    age <- difftime(now, oldTime)
+    if (age < 3600) {
+      needNew <- FALSE
+    }
+  }
+  if (needNew) {
+    olds <- do.call(old.packages, args)
+    assign(paste0("olds", "__", format(Sys.time())), olds, envir = .pkgEnv)
+  } else {
+    olds <- get(hasOlds, envir = .pkgEnv)
+  }
+
   if (!is.null(olds)) {
 
     # Don't try to update the dependencies of SpaDES.install (which are currently Require, data.table, remotes)
@@ -171,14 +191,7 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     do.call(install.packages, args)
   }
   if (isTRUE(SpaDES.project)) {
-    tf <- tempfile();
-    download.file("https://raw.githubusercontent.com/r-universe/predictiveecology/master/.remotes.json",
-                  destfile = tf)
-    out <- readLines(tf)
-    if (any(grepl("SpaDES.project", out)))
-      install.packages("SpaDES.project", repos = 'https://predictiveecology.r-universe.dev')
-    else
-      out <- Require::Require("PredictiveEcology/SpaDES.project", require = FALSE, upgrade = FALSE)
+    Require("PredictiveEcology/SpaDES.project", require = FALSE, upgrade = FALSE)
   }
 
   return(invisible())
