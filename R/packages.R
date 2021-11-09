@@ -108,6 +108,11 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     uniquedPkgs <- setdiff(uniquedPkgs, getFromNamespace(".basePkgs", "Require"))
     anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
 
+    pd <- Require::extractPkgName(
+      Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
+    )
+    anyLoaded <- anyLoaded[!names(anyLoaded) %in% pd]
+
     if (any(anyLoaded)) {
       stop(
         "Some packages that need to be updated are still loaded; please restart R.",
