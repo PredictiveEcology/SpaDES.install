@@ -64,8 +64,6 @@ installGitHubPackage <- installGithubPackage
 
 #' Install SpaDES packages, making sure to `update.packages` first
 #'
-#' @param ask Passed to `update.packages`.
-#'
 #' @param type passed to both `update.packages` and `install.packages`.
 #'   This will be set to `"binary"` on Windows, if not set, to get the binary packages from CRAN.
 #'
@@ -81,18 +79,26 @@ installGitHubPackage <- installGithubPackage
 #'
 #' @param dontUpdate character vector of packages not to update
 #'
+#' @param upgrade Logical or character ("default", "ask", "never", "always").
+#'   If `TRUE` or `"always"`, then `update.packages` will be run on installed packages,
+#'   and any packages that are not their most recent will be installed with their
+#'   current version on CRAN.
+#'
 #' @param SpaDES.project logical. If TRUE, the default, then the SpaDES.project will
 #'   also be installed. This is not on CRAN. It will first attempt to install from
 #'   predictiveecology.r-universe.dev. If that fails, then it will install from source
 #'   from github.com/PredictiveEcology/SpaDES.project
 #'
+#' @param ... Passed to deprecated arguments (currently: `ask`)
+#'
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
-installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
+installSpaDES <- function(type, libPath = .libPaths()[1],
                           fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
                                          "Rcpp", "RcppParallel", "cpp11"),
                           versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
-                          dontUpdate = c("scam"), SpaDES.project = TRUE) {
+                          dontUpdate = c("scam"), upgrade = c("default", "ask", "always", "never"),
+                          SpaDES.project = TRUE, ...) {
   srch <- search()
   basePkgs <- dir(tail(.libPaths(), 1))
   basePkgs <- c(basePkgs, "GlobalEnv", "Autoloads")
@@ -122,6 +128,8 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     }
   }
   writeable <- unlist(lapply(.libPaths(), file.access, mode = 2)) == 0
+
+  ask <- isTRUE(list(...)$ask) || upgrade[1] == "ask"
   args <- list(checkBuilt = TRUE, ask = ask)
   if (any(writeable)) {
     libPathsForUpdate <- .libPaths()[writeable]
@@ -132,7 +140,7 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     args$type <- "binary"
   }
 
-  hasOlds <- ls(envir = .pkgEnv, pattern = "olds")
+  hasOlds <- tail(sort(ls(envir = .pkgEnv, pattern = "olds")), 1)
   needNew <- TRUE
   if (length(hasOlds) > 0) {
     now <- Sys.time()
@@ -144,28 +152,60 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
   }
   if (needNew) {
     olds <- do.call(old.packages, args)
-    assign(paste0("olds", "__", format(Sys.time())), olds, envir = .pkgEnv)
+    hasOlds <- paste0("olds", "__", format(Sys.time()))
+    assign(hasOlds, olds, envir = .pkgEnv)
   } else {
     olds <- get(hasOlds, envir = .pkgEnv)
   }
+  removeCache <- FALSE
+  on.exit({
+    if (isTRUE(removeCache))
+      rm(list = hasOlds, envir = .pkgEnv)
+  })
 
-  if (!is.null(olds)) {
-
-    # Don't try to update the dependencies of SpaDES.install (which are currently Require, data.table, remotes)
-    toUpdate <- setdiff(olds[, "Package"], dontUpdate)
-    dontUpdate <- intersect(SpaDES.installDeps, toUpdate)
-    if (length(dontUpdate)) {
-      toUpdate <- setdiff(toUpdate, dontUpdate)
-    }
-    if (length(toUpdate)) {
-      args[["pkgs"]] <- toUpdate
-      args[["dependencies"]] <- FALSE
-      do.call(install.packages, args)
+  spadesPkgs <- c("SpaDES.core", "SpaDES.tools")
+  deps <- unique(unlist(Require::pkgDep(spadesPkgs, recursive = TRUE)))
+  if (!is.null(olds) && (
+    any(upgrade[1] %in% c("default", "always", "ask"))
+    ) || isTRUE(upgrade[1])) {
+    upgrade <- TRUE
+    oldsAreSpaDESDeps <- olds[, "Package"] %in% Require::extractPkgName(deps)
+    if (any(oldsAreSpaDESDeps)) {
+      olds <- olds[oldsAreSpaDESDeps,, drop = FALSE]
+      # Don't try to update the dependencies of SpaDES.install (which are currently Require, data.table, remotes)
+      toUpdate <- setdiff(olds[, "Package"], dontUpdate)
+      dontUpdate <- intersect(SpaDES.installDeps, toUpdate)
+      if (length(dontUpdate)) {
+        toUpdate <- setdiff(toUpdate, dontUpdate)
+      }
+      if (length(toUpdate)) {
+        toUpdateDF <- as.data.frame(olds[olds[,"Package"] %in% toUpdate,, drop = FALSE])
+        toUpdateDF <- toUpdateDF[, c("Package", "Installed", "ReposVer")]
+        toUpdateDF <- data.frame(toUpdateDF$Package, toUpdateDF$Installed, "-->",
+                                 toUpdateDF$ReposVer)
+        colnames(toUpdateDF) <- c("Package", "Installed Version", "  ", "Available Version")
+        Require:::messageDF(toUpdateDF)
+        if (isTRUE(ask)) {
+          answer <- readline("Proceed with upgrades to packages? (Y or N)")
+          answer <- tolower(answer)
+          if (answer == "n") upgrade = FALSE
+        }
+        if (isTRUE(upgrade)) {
+          message("updating packages ... ",
+                  paste(toUpdate))
+          Require(toUpdate, libPaths = libPath, dependencies = FALSE,
+                  require = FALSE, install = "force")
+          removeCache <- TRUE
+        }
+        # args[["pkgs"]] <- toUpdate
+        # args[["dependencies"]] <- FALSE
+        # do.call(install.packages, args)
+      }
     }
   }
 
   #  install
-  args <- list(c("SpaDES.core", "SpaDES.tools"), dependencies = TRUE)
+  args <- list(spadesPkgs, dependencies = TRUE)
   if (isWin && missing(type)) {
     args$type <- "binary"
   }
@@ -177,6 +217,7 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
 
     # Binary first
+    removeCache <- TRUE
     Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
     # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
     # Source second
@@ -185,18 +226,20 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     # install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
   }
 
-  if (length(versions) > 0) {
-    mm <- match(Require::extractPkgName(versions), args[[1]])
-    args[[1]][mm] <- versions
-  }
-
   if (length(args[[1]])) {
-    pkgsToInstall <- unique(c(args[[1]], unname(unlist(pkgDep(args[[1]], recursive = TRUE)))))
+
+    pkgsToInstall <- unique(c(args[[1]], deps))
+    if (length(versions) > 0) {
+      mm <- match(Require::extractPkgName(versions), pkgsToInstall)
+      pkgsToInstall[mm] <- versions
+    }
+
     if (isTRUE(SpaDES.project)) {
       pkgsToInstall <- c(pkgsToInstall, "PredictiveEcology/SpaDES.project")
     }
-    Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE)
-    # do.call(install.packages, args)
+    anything <- Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE)
+    if (any(!is.na(attr(anything, "Require")$installFrom)))
+      removeCache <- TRUE
   }
 
   return(invisible())

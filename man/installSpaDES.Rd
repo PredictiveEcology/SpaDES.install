@@ -5,19 +5,18 @@
 \title{Install SpaDES packages, making sure to \code{update.packages} first}
 \usage{
 installSpaDES(
-  ask = FALSE,
   type,
   libPath = .libPaths()[1],
   fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
     "Rcpp", "RcppParallel", "cpp11"),
   versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
   dontUpdate = c("scam"),
-  SpaDES.project = TRUE
+  upgrade = c("default", "ask", "always", "never"),
+  SpaDES.project = TRUE,
+  ...
 )
 }
 \arguments{
-\item{ask}{Passed to \code{update.packages}.}
-
 \item{type}{passed to both \code{update.packages} and \code{install.packages}.
 This will be set to \code{"binary"} on Windows, if not set, to get the binary packages from CRAN.}
 
@@ -33,10 +32,17 @@ a few others. Has no effect if}
 
 \item{dontUpdate}{character vector of packages not to update}
 
+\item{upgrade}{Logical or character ("default", "ask", "never", "always").
+If \code{TRUE} or \code{"always"}, then \code{update.packages} will be run on installed packages,
+and any packages that are not their most recent will be installed with their
+current version on CRAN.}
+
 \item{SpaDES.project}{logical. If TRUE, the default, then the SpaDES.project will
 also be installed. This is not on CRAN. It will first attempt to install from
 predictiveecology.r-universe.dev. If that fails, then it will install from source
 from github.com/PredictiveEcology/SpaDES.project}
+
+\item{...}{Passed to deprecated arguments (currently: \code{ask})}
 }
 \description{
 Install SpaDES packages, making sure to \code{update.packages} first
