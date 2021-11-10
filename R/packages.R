@@ -35,24 +35,25 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     AllModules <- lapply(modulePath, dir)
     if (length(unlist(AllModules)) == 0) return("No modules in that modulePath. All clear.")
     # AllModules <- dir(modulePath)
-    msg <- capture.output(type = "message",
-                          hasSC <- requireNamespace("SpaDES.core"))
-    if (!hasSC) {
-      ## installing SpaDES.core will also install reproducible
-      if (any(grepl("there is no package.*SpaDES.core", msg))) {
-        message("Need to install SpaDES.core from CRAN to continue")
-      } else if (any(grepl("there is no package", msg))) {
-        message(paste(msg, collapse = "\n"))
-        message("Some dependencies of SpaDES.core are missing; installing those")
-      }
-
-      out <- Require("SpaDES.core", require = FALSE, install = TRUE)
-    }
+    # msg <- capture.output(type = "message",
+    #                       hasSC <- requireNamespace("SpaDES.core"))
+    # if (!hasSC) {
+    #   ## installing SpaDES.core will also install reproducible
+    #   if (any(grepl("there is no package.*SpaDES.core", msg))) {
+    #     message("Need to install SpaDES.core from CRAN to continue")
+    #   } else if (any(grepl("there is no package", msg))) {
+    #     message(paste(msg, collapse = "\n"))
+    #     message("Some dependencies of SpaDES.core are missing; installing those")
+    #   }
+    #
+    #   out <- Require("SpaDES.core", require = FALSE, install = TRUE)
+    # }
     AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
       message(mp)
       lapply(am, function(mod) {
         message("  ", mod)
-        SpaDES.core::packages(modules = mod, paths = mp)
+        # SpaDES.core::packages(modules = mod, paths = mp)
+        packagesInModules(modulePath = mp, modules = mod)
       })
     })
 
@@ -89,7 +90,7 @@ makeSureAllPackagesInstalled <- function(modulePath) {
         obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
         saveRDS(obj, file = AllPackagesFile)
         message("The following packages are in an incorrect state: ")
-        reproducible::messageDF(print(out[needAction == TRUE]))
+        get("messageDF", envir = asNamespace("Require"))(print(out[needAction == TRUE]))
         stop("Restart R; Run this function again immediately.", call. = FALSE)
       }
       Require::Require(out[needAction]$packageFullName,
@@ -123,4 +124,33 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     Require::Require(require = FALSE, AllPackagesUnlisted$AllPackagesUnlisted, upgrade = FALSE)
     unlink(AllPackagesFile)
   }
+}
+
+#' Extract reqdPkgs from SpaDES modules
+#'
+#' Parses module code, looking for the `reqdPkgs` element in the `defineModule` function.
+#'
+#' @return
+#' A character vector of sorted, uniqued packages that are identified in all named
+#' modules, or if `modules` is omitted, then all modules in `modulePath`.
+#'
+#' @export
+packagesInModules <- function(modulePath = options("spades.modulePath"), modules) {
+  if (missing(modules))
+    modules <- dir(modulePath)
+  pkgs <- lapply(modules, function(mod) {
+    for (i in 1:2) {
+      modPath <- file.path(modulePath, mod, paste0(mod, ".R"))
+      if (!file.exists(modPath))
+        modulePath <- "."
+      else
+        break
+    }
+    pp <- parse(file = modPath)
+    wh <- unlist(lapply(pp, grep, pattern = "defineModule"))
+    wh2 <- which(unlist(lapply(pp[[1]], function(x)
+      any(grepl(pattern = "reqdPkgs", format(x))))))
+    unlist(eval(pp[[wh]][[wh2]]$reqdPkgs))
+  })
+  sort(unique(unlist(pkgs)))
 }

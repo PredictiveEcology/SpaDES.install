@@ -18,6 +18,9 @@ installSpatialPackages(
 
 \item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
 \code{install.packages(lib = libPath, ...)}}
+
+\item{forceWindows}{Logical. If \code{TRUE}, then this will install from source on Windows,
+which is often unnecessary for e.g., spatial packages.}
 }
 \description{
 (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
