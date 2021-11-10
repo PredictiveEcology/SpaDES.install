@@ -40,7 +40,7 @@ if (!dir.exists(userRlib)) dir.create(userRlib, recursive = TRUE)
 # First: Require 
 if (!require("Require")) {install.packages("Require"); library(Require)}
 # Second: SpaDES.install
-Require("PredictiveEcology/SpaDES.install (>= 0.0.5.9007)", dependencies = NA) # install/load this package
+Require("PredictiveEcology/SpaDES.install (>= 0.0.5.9009)", dependencies = NA) # install/load this package
 # Last -- All others -- this will correctly install from source the spatial R packages + igraph
 installSpaDES()
 ```

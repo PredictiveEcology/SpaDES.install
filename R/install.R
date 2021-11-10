@@ -21,7 +21,7 @@ splitGitRepo <- function(gitRepo) {
 
 #' Install R Package from GitHub source code
 #'
-#' A lightweight alternative to `devtools::install_github`.
+#' A lightweight alternative to `remotes::install_github`.
 #' All dependencies must have been installed already for this to work.
 #'
 #' @param gitRepo A repository in the form: `Account/Repository@Branch` or `Account/Repository@SHA`.
@@ -34,6 +34,15 @@ installGithubPackage <- function(gitRepo, libPath = .libPaths()[1]) {
   gr <- splitGitRepo(gitRepo)
   modulePath <- file.path(tempdir(), paste0(sample(LETTERS, 8), collapse = ""))
   dir.create(modulePath, recursive = TRUE)
+
+  # deal with dependencies
+  # The next line makes an object exist in the Require:::.pkgEnv that will break the following
+  #    line if it isn't there.
+  workaround <- Require:::DESCRIPTIONFileVersionV(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
+  Deps <- Require:::DESCRIPTIONFileDeps(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
+
+  Require(Deps, require = FALSE, install = TRUE)
+
   out <- getModule(gitRepo, overwrite = TRUE, modulePath = modulePath)
   orig <- setwd(modulePath)
   if (nchar(Sys.which("R")) > 0) {
@@ -82,7 +91,7 @@ installGitHubPackage <- installGithubPackage
 installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
                           fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
                                          "Rcpp", "RcppParallel", "cpp11"),
-                          versions = c(SpaDES.core = "1.0.8", SpaDES.tools = "0.3.6"),
+                          versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
                           dontUpdate = c("scam"), SpaDES.project = TRUE) {
   srch <- search()
   basePkgs <- dir(tail(.libPaths(), 1))
@@ -168,30 +177,26 @@ installSpaDES <- function(ask = FALSE, type, libPath = .libPaths()[1],
     depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
 
     # Binary first
-    install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
+    Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
+    # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
     # Source second
-    install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
+    Require(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com",
+            dependencies = FALSE, require = FALSE, upgrade = FALSE)
+    # install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
   }
-  ip <- installed.packages()
-  versions <- versions[args[[1]]]
-  alreadyInstalled <- names(versions) %in% rownames(ip)
-  if (any(alreadyInstalled)) {
-    versions <- versions[alreadyInstalled]
-    whichOK <- unlist(lapply(seq(versions), function(ind) {
-      ok <- (!identical(as.character(packageVersion(names(versions)[ind])), versions[ind]))
-      if (identical(ok, TRUE)) {
-        message("skipping install of ", names(versions)[ind], "; version is OK")
-      }
-      ok
-    }))
-    args[[1]] <- args[[1]][!whichOK]
+
+  if (length(versions) > 0) {
+    mm <- match(Require::extractPkgName(versions), args[[1]])
+    args[[1]][mm] <- versions
   }
 
   if (length(args[[1]])) {
-    do.call(install.packages, args)
-  }
-  if (isTRUE(SpaDES.project)) {
-    Require("PredictiveEcology/SpaDES.project", require = FALSE, upgrade = FALSE)
+    pkgsToInstall <- unique(c(args[[1]], unname(unlist(pkgDep(args[[1]], recursive = TRUE)))))
+    if (isTRUE(SpaDES.project)) {
+      pkgsToInstall <- c(pkgsToInstall, "PredictiveEcology/SpaDES.project")
+    }
+    Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE)
+    # do.call(install.packages, args)
   }
 
   return(invisible())

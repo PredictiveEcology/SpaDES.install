@@ -16,6 +16,6 @@ installGitHubPackage(gitRepo, libPath = .libPaths()[1])
 Defaults to \code{.libPaths()[1]}.}
 }
 \description{
-A lightweight alternative to \code{devtools::install_github}.
+A lightweight alternative to \code{remotes::install_github}.
 All dependencies must have been installed already for this to work.
 }
