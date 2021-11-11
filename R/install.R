@@ -221,8 +221,14 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
     # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
     # Source second
-    Require(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com",
+    opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
+    on.exit({
+      options(opt)
+    }, add = TRUE)
+    Require(fromSource, type = "source", lib = libPath,
             dependencies = FALSE, require = FALSE, upgrade = FALSE)
+    options(opt)
+
     # install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
   }
 
