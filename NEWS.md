@@ -9,6 +9,7 @@ version 0.0.6
 * tweaks to `installSpatialPackages` and `installSpaDES` to deal with more edge cases
 * Assume `PredictiveEcology` account when not specified in using `getModule`
 * update documentation
+* better interactivity when no updates/installs necessary
 
 version 0.0.5
 =============

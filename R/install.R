@@ -114,19 +114,26 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
                          c("SpaDES.install",
                              SpaDES.installDeps)))
 
-  if (length(srch) > 0) {
-    message(
-      "It looks like you may need to restart your R session to get an R session without ",
-      "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
-      "If you are using RStudio and you are unable to restart without",
-      "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
-      " R session."
-    )
-    out <- readline("Do you want to proceed anyway? Y or N")
-    if (!identical("y", tolower(out))) {
-      stop("Try to restart R with Ctrl-Alt-F10 if you are in RStudio")
-    }
-  }
+  mayNeedRestart <- length(srch) > 0
+  restartMess <- paste0(
+    "It looks like you may need to restart your R session to get an R session without ",
+    "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+    "If you are using RStudio and you are unable to restart without",
+    "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
+    " R session."
+  )
+  restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
+  # message(
+  #   "It looks like you may need to restart your R session to get an R session without ",
+  #   "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+  #   "If you are using RStudio and you are unable to restart without",
+  #   "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
+  #   " R session."
+  # )
+  # out <- readline("Do you want to proceed anyway? Y or N")
+  # if (!identical("y", tolower(out))) {
+  #   stop("Try to restart R with Ctrl-Alt-F10 if you are in RStudio")
+  # }
   writeable <- unlist(lapply(.libPaths(), file.access, mode = 2)) == 0
 
   ask <- isTRUE(list(...)$ask) || upgrade[1] == "ask"
@@ -191,6 +198,11 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
           if (answer == "n") upgrade = FALSE
         }
         if (isTRUE(upgrade)) {
+          if (mayNeedRestart) {
+            message(restartMess)
+            out <- readline("Do you want to proceed anyway? Y or N")
+            if (!identical("y", tolower(out))) stop(restartMessAtStop)
+          }
           message("updating packages ... ",
                   paste(toUpdate))
           Require(toUpdate, libPaths = libPath, dependencies = FALSE,
@@ -218,6 +230,11 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 
     # Binary first
     removeCache <- TRUE
+    if (mayNeedRestart) {
+      message(restartMess)
+      out <- readline("Do you want to proceed anyway? Y or N")
+      if (!identical("y", tolower(out))) stop(restartMessAtStop)
+    }
     Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
     # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
     # Source second
@@ -243,6 +260,12 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     if (isTRUE(SpaDES.project)) {
       pkgsToInstall <- c(pkgsToInstall, "PredictiveEcology/SpaDES.project")
     }
+    if (mayNeedRestart) {
+      message(restartMess)
+      out <- readline("Do you want to proceed anyway? Y or N")
+      if (!identical("y", tolower(out))) stop(restartMessAtStop)
+    }
+
     anything <- Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE)
     if (any(!is.na(attr(anything, "Require")$installFrom)))
       removeCache <- TRUE
