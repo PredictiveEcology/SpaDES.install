@@ -260,15 +260,20 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     if (isTRUE(SpaDES.project)) {
       pkgsToInstall <- c(pkgsToInstall, "PredictiveEcology/SpaDES.project")
     }
-    if (mayNeedRestart) {
-      message(restartMess)
-      out <- readline("Do you want to proceed anyway? Y or N")
-      if (!identical("y", tolower(out))) stop(restartMessAtStop)
+    # First check if need anything installed
+    anything <- Require(pkgsToInstall, require = FALSE, lib = libPath,
+                        install = FALSE, upgrade = FALSE, verbose = TRUE)
+    if (!all(attr(anything, "Require")$installed)) {
+      if (mayNeedRestart) {
+        message(restartMess)
+        out <- readline("Do you want to proceed anyway? Y or N")
+        if (!identical("y", tolower(out))) stop(restartMessAtStop)
+      }
+      anything <- Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE,
+                          verbose = TRUE)
+      if (any(!is.na(attr(anything, "Require")$installFrom)))
+        removeCache <- TRUE
     }
-
-    anything <- Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE)
-    if (any(!is.na(attr(anything, "Require")$installFrom)))
-      removeCache <- TRUE
   }
 
   return(invisible())
