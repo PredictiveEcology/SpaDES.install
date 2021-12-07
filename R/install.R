@@ -204,7 +204,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
             if (!identical("y", tolower(out))) stop(restartMessAtStop)
           }
           message("updating packages ... ",
-                  paste(toUpdate))
+                  paste(toUpdate, collapse = ", "))
           Require(toUpdate, libPaths = libPath, dependencies = FALSE,
                   require = FALSE, install = "force")
           removeCache <- TRUE
