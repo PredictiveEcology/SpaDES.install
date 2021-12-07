@@ -1,9 +1,11 @@
 #' Simple function to download a SpaDES module as GitHub repository
 #'
-#' @param gitRepo A github repository, presented in the standard R way, with
+#' @param ... One or more github repositories as character strings that contain
+#'   SpaDES modules. These should be presented in the standard R way, with
 #'   `account/repository@branch`. If `account` is omitted, then `"PredictiveEcology` will
 #'   be assumed.
-#' @param overwrite Logical. If \code{TRUE}, then the download will delete any
+#' @param overwrite A logical vector of same length (or length 1) \code{gitRepo}.
+#'   If \code{TRUE}, then the download will delete any
 #'   existing folder with the same name as the \code{repository}
 #'   provided in \code{gitRepo}
 #' @param modulePath A local path in which to place the full module, within
@@ -13,39 +15,50 @@
 #'
 #' @export
 #' @importFrom utils download.file unzip
-getModule <- function(gitRepo, overwrite = FALSE, modulePath) {
+getModule <- function(..., overwrite = FALSE, modulePath) {
+
+  gitRepo = unlist(list(...))
   if (missing(modulePath)) modulePath <- getOption("spades.modulePath")
   if (is.null(modulePath)) modulePath <- "."
   if (!dir.exists(modulePath)) dir.create(modulePath, recursive = TRUE)
-  gr <- splitGitRepo(gitRepo)
-  ar <- file.path(gr$acct, gr$repo)
-  repoFull <- file.path(modulePath, gr$repo)
-  zipFileName <- normalizePath(paste0(repoFull, ".zip"), winslash = "/", mustWork = FALSE)
-  for (i in 1:2) {
-    url <- paste0("http://github.com/", ar, "/archive/", gr$br, ".zip")
-    out <- try(download.file(url, destfile = zipFileName))
-    if (is(out, "try-error") && identical(gr$br, "master")) {
-      gr$br <- "main"
-    } else {
-      break
+  out <- Map(gitRep = gitRepo, overwriteInner = overwrite, function(gitRep, overwriteInner) {
+
+    gr <- splitGitRepo(gitRep)
+    ar <- file.path(gr$acct, gr$repo)
+    repoFull <- file.path(modulePath, gr$repo)
+    repoFullNormalized <- normalizePath(repoFull)
+    if (dir.exists(repoFull)) {
+      if (isTRUE(overwriteInner)) {
+        unlink(repoFull, recursive = TRUE)
+      } else {
+        message(repoFull, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
+        return(repoFullNormalized)
+      }
     }
-  }
-  out <- unzip(zipFileName, exdir = modulePath) # unzip it
-  if (dir.exists(repoFull)) {
-    if (isTRUE(overwrite)) {
-      unlink(repoFull, recursive = TRUE)
-    } else {
-      stop(repoFull, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
+
+    zipFileName <- normalizePath(paste0(repoFull, ".zip"), winslash = "/", mustWork = FALSE)
+    for (i in 1:2) {
+      url <- paste0("http://github.com/", ar, "/archive/", gr$br, ".zip")
+      out <- try(download.file(url, destfile = zipFileName), silent = TRUE)
+      if (is(out, "try-error") && identical(gr$br, "master")) {
+        gr$br <- "main"
+      } else {
+        break
+      }
     }
-  }
-  dirnames <- dirname(out)
-  badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
-  file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
-  unlink(zipFileName)
-  message(gitRepo, " downloaded and placed in ", normalizePath(repoFull, winslash = "/"))
-  possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
-  if (file.exists(possRmd)) {
-    message("To run it, try: \nfile.edit('", possRmd, "')")
-  }
-  return(normalizePath(repoFull))
+    out <- unzip(zipFileName, exdir = modulePath) # unzip it
+
+    dirnames <- dirname(out)
+    badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
+    file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
+    unlink(zipFileName)
+    message(gitRep, " downloaded and placed in ", normalizePath(repoFull, winslash = "/"))
+    possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
+    # if (file.exists(possRmd)) {
+    #   message("To run it, try: \nfile.edit('", possRmd, "')")
+    # }
+    return(repoFullNormalized)
+  })
+
+  return(out)
 }

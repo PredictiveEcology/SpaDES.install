@@ -4,14 +4,16 @@
 \alias{getModule}
 \title{Simple function to download a SpaDES module as GitHub repository}
 \usage{
-getModule(gitRepo, overwrite = FALSE, modulePath)
+getModule(..., overwrite = FALSE, modulePath)
 }
 \arguments{
-\item{gitRepo}{A github repository, presented in the standard R way, with
+\item{...}{One or more github repositories as character strings that contain
+SpaDES modules. These should be presented in the standard R way, with
 \code{account/repository@branch}. If \code{account} is omitted, then \verb{"PredictiveEcology} will
 be assumed.}
 
-\item{overwrite}{Logical. If \code{TRUE}, then the download will delete any
+\item{overwrite}{A logical vector of same length (or length 1) \code{gitRepo}.
+If \code{TRUE}, then the download will delete any
 existing folder with the same name as the \code{repository}
 provided in \code{gitRepo}}
 
