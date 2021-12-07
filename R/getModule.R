@@ -23,15 +23,35 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
   if (!dir.exists(modulePath)) dir.create(modulePath, recursive = TRUE)
   out <- Map(gitRep = gitRepo, overwriteInner = overwrite, function(gitRep, overwriteInner) {
 
+    vn <- Require::extractVersionNumber(gitRep)
     gr <- splitGitRepo(gitRep)
     ar <- file.path(gr$acct, gr$repo)
     repoFull <- file.path(modulePath, gr$repo)
-    repoFullNormalized <- normalizePath(repoFull)
+    repoFullNormalized <- normalizePath(repoFull, mustWork = FALSE, winslash = "/")
+    inequ <- Require::extractInequality(gitRep)
+    gitRep <- Require::extractPkgName(gitRep)
+
     if (dir.exists(repoFull)) {
-      if (isTRUE(overwriteInner)) {
-        unlink(repoFull, recursive = TRUE)
+      versionOK <- FALSE
+      if (!is.na(vn)) {
+        fn <- Require:::getGitHubFile(paste0(gr$acct,"/",gr$repo,"@",gr$br), filename = paste0(gr$repo, ".R"))
+        dircreated <- Require::checkPath(file.path(dirname(fn$destFile), gr$repo), create = TRUE)
+        newTempName <- file.path(dircreated, paste0(gr$repo, ".R"))
+        file.rename(fn$destFile, newTempName)
+        ver <- metadataInModules(dirname(dircreated), gr$repo, "version", needUnlist = FALSE)[[1]]
+        compVers <- compareVersion(as.character(ver[[gr$repo]]), vn)
+        versionOK <- eval(parse(text = paste0(compVers, inequ, 0)))
+      }
+      if (isTRUE(overwriteInner) && !versionOK) {
+        message(repoFullNormalized, " exists; overwriting")
+        unlink(repoFullNormalized, recursive = TRUE)
       } else {
-        message(repoFull, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
+        if (versionOK)
+          message(repoFullNormalized, " directory already exists, overwrite = TRUE, but version number is OK. Not overwriting. ",
+                  "To overwrite, either delete the module manually, change the minimum version number, ",
+                  "or remove version number comparison")
+        else
+          message(repoFullNormalized, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
         return(repoFullNormalized)
       }
     }
@@ -39,8 +59,8 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
     zipFileName <- normalizePath(paste0(repoFull, ".zip"), winslash = "/", mustWork = FALSE)
     for (i in 1:2) {
       url <- paste0("http://github.com/", ar, "/archive/", gr$br, ".zip")
-      out <- try(download.file(url, destfile = zipFileName), silent = TRUE)
-      if (is(out, "try-error") && identical(gr$br, "master")) {
+      suppressWarnings(out <- try(download.file(url, destfile = zipFileName), silent = TRUE))
+      if (is(out, "try-error") && identical(gr$br, "main")) {
         gr$br <- "main"
       } else {
         break
@@ -52,8 +72,8 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
     badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
     file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
     unlink(zipFileName)
-    message(gitRep, " downloaded and placed in ", normalizePath(repoFull, winslash = "/"))
-    possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
+    message(gitRep, " downloaded and placed in ", repoFullNormalized)
+    # possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
     # if (file.exists(possRmd)) {
     #   message("To run it, try: \nfile.edit('", possRmd, "')")
     # }

@@ -126,19 +126,27 @@ makeSureAllPackagesInstalled <- function(modulePath) {
   }
 }
 
-#' Extract reqdPkgs from SpaDES modules
+#' Extract element from SpaDES module metadata
 #'
-#' Parses module code, looking for the `reqdPkgs` element in the `defineModule` function.
+#' Parses module code, looking for the `metadataItem` (default = `"reqdPkgs"`)
+#' element in the `defineModule` function.
 #'
 #' @return
 #' A character vector of sorted, uniqued packages that are identified in all named
 #' modules, or if `modules` is omitted, then all modules in `modulePath`.
 #'
+#' @rdname metadata
 #' @export
 packagesInModules <- function(modulePath = options("spades.modulePath"), modules) {
+  metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs")
+}
+
+#' @rdname metadata
+#' @export
+metadataInModules <- function(modulePath = options("spades.modulePath"), modules, metadataItem = "reqdPkgs", needUnlist = TRUE) {
   if (missing(modules))
     modules <- dir(modulePath)
-  pkgs <- lapply(modules, function(mod) {
+  vals <- lapply(modules, function(mod) {
     for (i in 1:2) {
       modPath <- file.path(modulePath, mod, paste0(mod, ".R"))
       if (!file.exists(modPath))
@@ -149,8 +157,14 @@ packagesInModules <- function(modulePath = options("spades.modulePath"), modules
     pp <- parse(file = modPath)
     wh <- unlist(lapply(pp, grep, pattern = "defineModule"))
     wh2 <- which(unlist(lapply(pp[[1]], function(x)
-      any(grepl(pattern = "reqdPkgs", format(x))))))
-    unlist(eval(pp[[wh]][[wh2]]$reqdPkgs))
+      any(grepl(pattern = metadataItem, format(x))))))
+    val <- eval(pp[[wh]][[wh2]][[metadataItem]])
+    if (needUnlist)
+      val <- unlist(val)
+    val
   })
-  sort(unique(unlist(pkgs)))
+
+  if (needUnlist)
+    vals <- sort(unique(unlist(vals)))
+  vals
 }

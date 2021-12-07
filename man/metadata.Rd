@@ -2,14 +2,22 @@
 % Please edit documentation in R/packages.R
 \name{packagesInModules}
 \alias{packagesInModules}
-\title{Extract reqdPkgs from SpaDES modules}
+\alias{metadataInModules}
+\title{Extract element from SpaDES module metadata}
 \usage{
 packagesInModules(modulePath = options("spades.modulePath"), modules)
+
+metadataInModules(
+  modulePath = options("spades.modulePath"),
+  modules,
+  metadataItem = "reqdPkgs"
+)
 }
 \value{
 A character vector of sorted, uniqued packages that are identified in all named
 modules, or if \code{modules} is omitted, then all modules in \code{modulePath}.
 }
 \description{
-Parses module code, looking for the \code{reqdPkgs} element in the \code{defineModule} function.
+Parses module code, looking for the \code{metadataItem} (default = \code{"reqdPkgs"})
+element in the \code{defineModule} function.
 }

@@ -14,7 +14,7 @@ splitGitRepo <- function(gitRepo) {
   if (length(grSplit) > 2) {
     br <- grSplit[[3]]
   } else {
-    br <- "master"
+    br <- "main"
   }
   list(acct = acct, repo = repo, br = br)
 }
