@@ -50,14 +50,15 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     # }
     AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
       message(mp)
-      lapply(am, function(mod) {
+      out <- lapply(am, function(mod) {
         message("  ", mod)
         # SpaDES.core::packages(modules = mod, paths = mp)
         packagesInModules(modulePath = mp, modules = mod)
       })
+      unlist(out[!unlist(lapply(out, function(o) NROW(o) == 0))], recursive = FALSE)
     })
 
-    AllPackagesUnlisted <- unname(unlist(AllPackages))
+    AllPackagesUnlisted <- unique(unname(unlist(AllPackages)))
     out <- Require::Require(require = FALSE, AllPackagesUnlisted, install = FALSE, verbose = TRUE)
     out <- attr(out, "Require")
 
@@ -138,35 +139,59 @@ makeSureAllPackagesInstalled <- function(modulePath) {
 #' @rdname metadata
 #' @export
 packagesInModules <- function(modules, modulePath = getOption("spades.modulePath")) {
-  metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs",
-                    needUnlist = TRUE)
+  metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs")
 }
 
 #' @rdname metadata
 #' @export
 metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = getOption("spades.modulePath"),
-                              needUnlist = FALSE) {
+                              needUnlist) {
   if (missing(modules))
     modules <- dir(modulePath)
+  names(modules) <- modules
+
+  if (any(metadataItem %in% c("inputObjects", "outputObjects", "parameters"))) {
+    if (!require("SpaDES.core", quietly = TRUE)) stop("To evaluate that metadataItem, please install SpaDES.core")
+  }
+  if (missing(needUnlist)) {
+    needUnlistInner <- switch(metadataItem, reqdPkgs = TRUE, version = FALSE, authors = FALSE, FALSE)
+    needUnlistOuter <- switch(metadataItem, reqdPkgs = FALSE, version = TRUE, authors = FALSE, FALSE)
+  }
   vals <- lapply(modules, function(mod) {
     for (i in 1:2) {
       modPath <- file.path(modulePath, mod, paste0(mod, ".R"))
-      if (!file.exists(modPath))
+      feMP <- file.exists(modPath)
+      if (!feMP)
         modulePath <- "."
       else
         break
     }
-    pp <- parse(file = modPath)
-    wh <- unlist(lapply(pp, grep, pattern = "defineModule"))
-    wh2 <- which(unlist(lapply(pp[[1]], function(x)
-      any(grepl(pattern = metadataItem, format(x))))))
-    val <- eval(pp[[wh]][[wh2]][[metadataItem]])
-    if (needUnlist)
-      val <- unlist(val)
-    val
+    if (feMP) {
+      pp <- parse(file = modPath)
+      wh <- unlist(lapply(pp, grep, pattern = "defineModule"))
+      wh2 <- which(unlist(lapply(pp[[1]], function(x)
+        any(grepl(pattern = metadataItem, format(x))))))
+      val <- eval(pp[[wh]][[wh2]][[metadataItem]])
+      if (identical(metadataItem, "version")) {
+        val <- lapply(val, as.character)
+        hasSpaDES.core <- names(val) == "SpaDES.core"
+        val <- unname(val)
+        if (any(hasSpaDES.core))
+          val <- val[!hasSpaDES.core]
+      }
+      if (needUnlistInner)
+        val <- unlist(val)
+      val
+    }
   })
+  vals <- vals[!unlist(lapply(vals, is.null))]
 
-  if (needUnlist)
-    vals <- sort(unique(unlist(vals)))
+  if (needUnlistOuter) {
+    vals2 <- unlist(vals, recursive = FALSE)
+    dups <- duplicated(vals2)
+    vals <- try(sort(vals2[!dups]), silent = TRUE)
+    if (is(vals, "try-error"))
+      vals <- vals2[!dups]
+  }
   vals
 }

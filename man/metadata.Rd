@@ -5,13 +5,13 @@
 \alias{metadataInModules}
 \title{Extract element from SpaDES module metadata}
 \usage{
-packagesInModules(modulePath = options("spades.modulePath"), modules)
+packagesInModules(modules, modulePath = getOption("spades.modulePath"))
 
 metadataInModules(
-  modulePath = options("spades.modulePath"),
   modules,
   metadataItem = "reqdPkgs",
-  needUnlist = TRUE
+  modulePath = getOption("spades.modulePath"),
+  needUnlist
 )
 }
 \value{
