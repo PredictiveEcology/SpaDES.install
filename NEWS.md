@@ -10,6 +10,8 @@ version 0.0.6
 * Assume `PredictiveEcology` account when not specified in using `getModule`
 * update documentation
 * better interactivity when no updates/installs necessary
+* `getModule` is now vectorized (on ...)
+* `getModule` can now provide module names with minimum version number e.g., `Biomass_core (>= 1.3.5)`
 
 version 0.0.5
 =============

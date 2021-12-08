@@ -10,7 +10,8 @@ packagesInModules(modulePath = options("spades.modulePath"), modules)
 metadataInModules(
   modulePath = options("spades.modulePath"),
   modules,
-  metadataItem = "reqdPkgs"
+  metadataItem = "reqdPkgs",
+  needUnlist = TRUE
 )
 }
 \value{
