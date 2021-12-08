@@ -156,7 +156,10 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = g
   if (missing(needUnlist)) {
     needUnlistInner <- switch(metadataItem, reqdPkgs = TRUE, version = FALSE, authors = FALSE, FALSE)
     needUnlistOuter <- switch(metadataItem, reqdPkgs = FALSE, version = TRUE, authors = FALSE, FALSE)
+  } else {
+    needUnlistInner <- needUnlistOuter <- needUnlist
   }
+
   vals <- lapply(modules, function(mod) {
     for (i in 1:2) {
       modPath <- file.path(modulePath, mod, paste0(mod, ".R"))
