@@ -138,12 +138,14 @@ makeSureAllPackagesInstalled <- function(modulePath) {
 #' @rdname metadata
 #' @export
 packagesInModules <- function(modules, modulePath = getOption("spades.modulePath")) {
-  metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs")
+  metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs",
+                    needUnlist = TRUE)
 }
 
 #' @rdname metadata
 #' @export
-metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = getOption("spades.modulePath"), needUnlist = TRUE) {
+metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = getOption("spades.modulePath"),
+                              needUnlist = FALSE) {
   if (missing(modules))
     modules <- dir(modulePath)
   vals <- lapply(modules, function(mod) {
