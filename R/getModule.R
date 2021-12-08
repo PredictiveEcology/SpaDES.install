@@ -23,6 +23,7 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
   if (!dir.exists(modulePath)) dir.create(modulePath, recursive = TRUE)
   out <- Map(gitRep = gitRepo, overwriteInner = overwrite, function(gitRep, overwriteInner) {
 
+    gitRepOrig <- gitRep
     vn <- Require::extractVersionNumber(gitRep)
     inequ <- Require::extractInequality(gitRep)
     if (!is.na(vn)) {
@@ -40,9 +41,14 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
         dircreated <- Require::checkPath(file.path(dirname(fn$destFile), gr$repo), create = TRUE)
         newTempName <- file.path(dircreated, paste0(gr$repo, ".R"))
         file.rename(fn$destFile, newTempName)
-        ver <- metadataInModules(dirname(dircreated), gr$repo, "version", needUnlist = FALSE)[[1]]
-        compVers <- compareVersion(as.character(ver[[gr$repo]]), vn)
-        versionOK <- eval(parse(text = paste0(compVers, inequ, 0)))
+        verOnline <- metadataInModules(dirname(dircreated), gr$repo, "version", needUnlist = FALSE)[[1]]
+        verInstalled <- metadataInModules(modulePath,
+                                          gr$repo, "version", needUnlist = FALSE)[[1]]
+        compVersOnline <- compareVersion(as.character(verOnline[[gr$repo]]), vn)
+        compVersInstalled <- compareVersion(as.character(verInstalled[[gr$repo]]), vn)
+        versionOnlineOK <- eval(parse(text = paste0(compVersOnline, inequ, 0)))
+        if (!versionOnlineOK) message("Version request cannot be satisfied at ", gitRepOrig)
+        versionOK <- eval(parse(text = paste0(compVersInstalled, inequ, 0)))
       }
       if (isTRUE(overwriteInner) && !versionOK) {
         message(repoFullNormalized, " exists; overwriting")
