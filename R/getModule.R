@@ -41,9 +41,8 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
         dircreated <- Require::checkPath(file.path(dirname(fn$destFile), gr$repo), create = TRUE)
         newTempName <- file.path(dircreated, paste0(gr$repo, ".R"))
         file.rename(fn$destFile, newTempName)
-        verOnline <- metadataInModules(dirname(dircreated), gr$repo, "version", needUnlist = FALSE)[[1]]
-        verInstalled <- metadataInModules(modulePath,
-                                          gr$repo, "version", needUnlist = FALSE)[[1]]
+        verOnline <- metadataInModules(gr$repo, "version", modulePath = dirname(dircreated), needUnlist = FALSE)[[1]]
+        verInstalled <- metadataInModules(gr$repo, "version", modulePath = modulePath, needUnlist = FALSE)[[1]]
         compVersOnline <- compareVersion(as.character(verOnline[[gr$repo]]), vn)
         compVersInstalled <- compareVersion(as.character(verInstalled[[gr$repo]]), vn)
         versionOnlineOK <- eval(parse(text = paste0(compVersOnline, inequ, 0)))
