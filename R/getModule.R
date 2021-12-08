@@ -25,7 +25,9 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
 
     vn <- Require::extractVersionNumber(gitRep)
     inequ <- Require::extractInequality(gitRep)
-    gitRep <- Require::extractPkgName(gitRep)
+    if (!is.na(vn)) {
+      gitRep <- gsub(" *\\(.+", "", gitRep)
+    }
     gr <- splitGitRepo(gitRep)
     ar <- file.path(gr$acct, gr$repo)
     repoFull <- file.path(modulePath, gr$repo)
