@@ -24,12 +24,12 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
   out <- Map(gitRep = gitRepo, overwriteInner = overwrite, function(gitRep, overwriteInner) {
 
     vn <- Require::extractVersionNumber(gitRep)
+    inequ <- Require::extractInequality(gitRep)
+    gitRep <- Require::extractPkgName(gitRep)
     gr <- splitGitRepo(gitRep)
     ar <- file.path(gr$acct, gr$repo)
     repoFull <- file.path(modulePath, gr$repo)
     repoFullNormalized <- normalizePath(repoFull, mustWork = FALSE, winslash = "/")
-    inequ <- Require::extractInequality(gitRep)
-    gitRep <- Require::extractPkgName(gitRep)
 
     if (dir.exists(repoFull)) {
       versionOK <- FALSE
