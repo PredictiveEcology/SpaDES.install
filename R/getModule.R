@@ -68,7 +68,7 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
       url <- paste0("http://github.com/", ar, "/archive/", gr$br, ".zip")
       suppressWarnings(out <- try(download.file(url, destfile = zipFileName), silent = TRUE))
       if (is(out, "try-error") && identical(gr$br, "main")) {
-        gr$br <- "main"
+        gr$br <- "master"
       } else {
         break
       }
