@@ -174,16 +174,21 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = g
       wh <- unlist(lapply(pp, grep, pattern = "defineModule"))
       wh2 <- which(unlist(lapply(pp[[1]], function(x)
         any(grepl(pattern = metadataItem, format(x))))))
-      val <- eval(pp[[wh]][[wh2]][[metadataItem]])
-      if (identical(metadataItem, "version")) {
-        val <- lapply(val, as.character)
-        hasSpaDES.core <- names(val) == "SpaDES.core"
-        val <- unname(val)
-        if (any(hasSpaDES.core))
-          val <- val[!hasSpaDES.core]
+      if (length(wh2)) {
+        val <- eval(pp[[wh]][[wh2]][[metadataItem]])
+        if (identical(metadataItem, "version")) {
+          val <- lapply(val, as.character)
+          hasSpaDES.core <- names(val) == "SpaDES.core"
+          val <- unname(val)
+          if (any(hasSpaDES.core))
+            val <- val[!hasSpaDES.core]
+        }
+        if (needUnlistInner)
+          val <- unlist(val)
+      } else {
+        message("Skipping ", metadataItem, " in ", modules, "; it is empty")
+        val <- NULL
       }
-      if (needUnlistInner)
-        val <- unlist(val)
       val
     }
   })
