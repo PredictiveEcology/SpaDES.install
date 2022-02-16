@@ -1,5 +1,10 @@
 Known issues: https://github.com/PredictiveEcology/SpaDES.install/issues
 
+version 0.0.7
+=============
+
+* `installFromSource` (unexported new function) is a new function that is "rerun proof", unlike `installSourcePackages`, as it uses `Require` internally
+
 version 0.0.6
 =============
 
