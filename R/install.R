@@ -115,14 +115,6 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
                              SpaDES.installDeps)))
 
   mayNeedRestart <- length(srch) > 0
-  restartMess <- paste0(
-    "It looks like you may need to restart your R session to get an R session without ",
-    "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
-    "If you are using RStudio and you are unable to restart without",
-    "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
-    " R session."
-  )
-  restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
   # message(
   #   "It looks like you may need to restart your R session to get an R session without ",
   #   "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
@@ -223,30 +215,8 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   }
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
-
-    depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
-    depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
-    depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
-
-    # Binary first
     removeCache <- TRUE
-    if (mayNeedRestart) {
-      message(restartMess)
-      out <- readline("Do you want to proceed anyway? Y or N")
-      if (!identical("y", tolower(out))) stop(restartMessAtStop)
-    }
-    Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
-    # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
-    # Source second
-    opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
-    on.exit({
-      options(opt)
-    }, add = TRUE)
-    Require(fromSource, type = "source", lib = libPath,
-            dependencies = FALSE, require = FALSE, upgrade = FALSE)
-    options(opt)
-
-    # install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
+    installFromSource(fromSource = fromSource, libPath = libPath)
   }
 
   if (length(args[[1]])) {
@@ -356,3 +326,37 @@ extractDepsOnly <- function(pkgs) {
   depsCleanUniq <- setdiff(depsCleanUniq, pkgs)
   depsCleanUniq
 }
+
+installFromSource <- function(fromSource, libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
+                              mayNeedRestart = FALSE, restartMess = restartMess,
+                              restartMessAtStop = restartMessAtStop) {
+  depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
+  depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
+  depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
+
+  # Binary first
+  if (mayNeedRestart) {
+    message(restartMess)
+    out <- readline("Do you want to proceed anyway? Y or N")
+    if (!identical("y", tolower(out))) stop(restartMessAtStop)
+  }
+  Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
+  # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
+  # Source second
+  # opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
+  # on.exit({
+  #   options(opt)
+  # }, add = TRUE)
+  Require(fromSource, type = "source", lib = libPath, repos = repos,
+          dependencies = FALSE, require = FALSE, upgrade = FALSE)
+  # options(opt)
+}
+
+restartMess <- paste0(
+  "It looks like you may need to restart your R session to get an R session without ",
+  "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+  "If you are using RStudio and you are unable to restart without",
+  "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
+  " R session."
+)
+restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
