@@ -327,7 +327,10 @@ extractDepsOnly <- function(pkgs) {
   depsCleanUniq
 }
 
-installFromSource <- function(fromSource, libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
+installFromSource <- function(fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
+                                             "igraph", "units", "qs",
+                                             "Rcpp", "RcppParallel", "cpp11"),
+                              libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
                               mayNeedRestart = FALSE, restartMess = restartMess,
                               restartMessAtStop = restartMessAtStop) {
   depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))

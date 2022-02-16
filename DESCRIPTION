@@ -7,7 +7,7 @@ URL:
     https://spades-install.predictiveecology.org/,
     https://github.com/PredictiveEcology/SpaDES.install
 Date: 2022-02-16
-Version: 0.0.6.9010
+Version: 0.0.6.9011
 Authors@R: c(
     person("Alex M", "Chubaty", email = "achubaty@for-cast.ca",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0001-7146-8135")),
@@ -19,7 +19,7 @@ Depends:
 Imports:
     data.table,
     methods,
-    Require,
+    Require (>= 0.0.13.9003),
     utils
 Encoding: UTF-8
 Language: en-CA
