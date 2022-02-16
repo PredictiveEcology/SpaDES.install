@@ -106,9 +106,9 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   #   srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
   # })
 
-  # SpaDES.installDeps <- Require::extractPkgName(
-  #   Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
-  # )
+  SpaDES.installDeps <- Require::extractPkgName(
+    Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
+  )
   # srch <- setdiff(srch,
   #                 paste0(c("SpaDES.install",
   #                            SpaDES.installDeps)))
