@@ -5,14 +5,22 @@
 \title{Install spatial packages}
 \usage{
 installSourcePackages(
-  pkgs = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units", "qs",
-    "Rcpp", "RcppParallel", "cpp11"),
+  fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units",
+    "qs", "Rcpp", "RcppParallel", "cpp11"),
   libPath = .libPaths()[1],
   repos = "https://cloud.r-project.org",
-  forceWindows = FALSE
+  forceSourceOnWindows = FALSE
 )
 }
 \arguments{
+\item{fromSource}{A character vector of packages that must be installed from
+source on Linux-alikes, even if the \code{options("repos")} is pointing to a binary
+repository of binary packages. The default is all the spatial packages, plus
+a few others. Has no effect if}
+
+\item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
+\code{install.packages(lib = libPath, ...)}}
+
 \item{repos}{URL of CRAN mirror to use to fetch source packages}
 }
 \description{

@@ -216,7 +216,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
     removeCache <- TRUE
-    installFromSource(fromSource = fromSource, libPath = libPath)
+    installSourcePackages(fromSource = fromSource, libPath = libPath)
   }
 
   if (length(args[[1]])) {
@@ -252,7 +252,9 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 #' Install spatial packages
 #'
 #' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
-#' liked to these external libraries.
+#' liked to these external libraries. This uses \code{Require} internally, so it will
+#' will not upgrade existing packages. If upgrades are needed, remove them first, e.g. with
+#' \code{remove.packages(c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"))}.
 #'
 #' @param repos URL of CRAN mirror to use to fetch source packages
 #'
@@ -269,7 +271,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"),
                                    repos = "https://cloud.r-project.org",
                                    libPath = .libPaths()[1],
-                                   forceWindows = FALSE) {
+                                   forceSourceOnWindows = FALSE) {
   ## rgdal and sf need additional args for homebrew on macOS
   origPkgs <- pkgs
   if (Sys.info()[["sysname"]] == "Darwin") {
@@ -282,42 +284,60 @@ installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "l
                      configure.args = "--with-proj-lib=/usr/local/lib/")
     pkgs <- setdiff(pkgs, c("rgdal", "sf"))
   }
-  installSourcePackages(pkgs, repos = repos, libPath = libPath, forceWindows = forceWindows)
+  installSourcePackages(pkgs, repos = repos, libPath = libPath, forceSourceOnWindows = forceSourceOnWindows)
 
   return(invisible())
 }
 
 
 
-#' Install spatial packages
+#' Install source packages
 #'
-#' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
-#' liked to these external libraries.
+#' (Re)install source packages. Dependencies of these packages will not force source
+#' installs, unless those dependencies are listed in \code{fromSource}. Note, this function
+#' only has real consequences if the default repository in \code{options(CRAN = "someURL")}
+#' is set to a binary package repository, and will not affect Windows machines
+#' unless \code{forceSourceOnWindows} is \code{TRUE}.
 #'
 #' @param repos URL of CRAN mirror to use to fetch source packages
+#'
+#' @inheritParams installSpaDES
 #'
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
 #' @export
-installSourcePackages <- function(pkgs = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
-                                           "igraph", "units", "qs",
-                                           "Rcpp", "RcppParallel", "cpp11"),
-                                  libPath = .libPaths()[1],
-                                  repos = "https://cloud.r-project.org",
-                                  forceWindows = FALSE) {
+installSourcePackages <- function(fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
+                                             "igraph", "units", "qs",
+                                             "Rcpp", "RcppParallel", "cpp11"),
+                              libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
+                              forceSourceOnWindows = FALSE) {
+  depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
+  depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
+  depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
 
-  depsCleanUniq <- extractDepsOnly(pkgs)
-
-  if (Require:::isWindows() && !isTRUE(forceWindows)) {
-    install.packages(unique(c(depsCleanUniq, pkgs)),
-                     lib = libPath, repos = repos)
-  } else {
-    # Binary first
-    install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath, repos = repos)
-    # Source second
-    install.packages(pkgs, type = "source", lib = libPath, repos = repos)
+  repos <- c(CRAN = repos[1])
+  # Binary first
+  if (mayNeedRestart) {
+    message(restartMess)
+    out <- readline("Do you want to proceed anyway? Y or N")
+    if (!identical("y", tolower(out))) stop(restartMessAtStop)
   }
-  # install.packages(pkgs, type = "source", repos = repos)
+
+  if (Require:::isWindows() && !isTRUE(forceSourceOnWindows)) {
+    Require(unique(c(depsCleanUniq, pkgs)), type = "source", lib = libPath, repos = repos,
+            dependencies = FALSE, require = FALSE, upgrade = FALSE)
+  } else {
+    Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
+    # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
+    # Source second
+    # opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
+    # on.exit({
+    #   options(opt)
+    # }, add = TRUE)
+    Require(fromSource, type = "source", lib = libPath, repos = repos,
+            dependencies = FALSE, require = FALSE, upgrade = FALSE)
+  }
+  # options(opt)
 }
 
 extractDepsOnly <- function(pkgs) {
@@ -327,33 +347,6 @@ extractDepsOnly <- function(pkgs) {
   depsCleanUniq
 }
 
-installFromSource <- function(fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
-                                             "igraph", "units", "qs",
-                                             "Rcpp", "RcppParallel", "cpp11"),
-                              libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
-                              mayNeedRestart = FALSE, restartMess = restartMess,
-                              restartMessAtStop = restartMessAtStop) {
-  depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
-  depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
-  depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
-
-  # Binary first
-  if (mayNeedRestart) {
-    message(restartMess)
-    out <- readline("Do you want to proceed anyway? Y or N")
-    if (!identical("y", tolower(out))) stop(restartMessAtStop)
-  }
-  Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
-  # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
-  # Source second
-  # opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
-  # on.exit({
-  #   options(opt)
-  # }, add = TRUE)
-  Require(fromSource, type = "source", lib = libPath, repos = c(CRAN = repos[1]),
-          dependencies = FALSE, require = FALSE, upgrade = FALSE)
-  # options(opt)
-}
 
 restartMess <- paste0(
   "It looks like you may need to restart your R session to get an R session without ",

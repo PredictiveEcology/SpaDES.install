@@ -8,7 +8,7 @@ installSpatialPackages(
   pkgs = c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"),
   repos = "https://cloud.r-project.org",
   libPath = .libPaths()[1],
-  forceWindows = FALSE
+  forceSourceOnWindows = FALSE
 )
 }
 \arguments{
