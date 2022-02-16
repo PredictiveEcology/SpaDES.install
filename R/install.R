@@ -347,7 +347,7 @@ installFromSource <- function(fromSource, libPath = .libPaths()[1], repos = "htt
   # on.exit({
   #   options(opt)
   # }, add = TRUE)
-  Require(fromSource, type = "source", lib = libPath, repos = repos,
+  Require(fromSource, type = "source", lib = libPath, repos = c(CRAN = repos[1]),
           dependencies = FALSE, require = FALSE, upgrade = FALSE)
   # options(opt)
 }
