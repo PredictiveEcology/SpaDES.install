@@ -99,22 +99,21 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
                           versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
                           dontUpdate = c("scam"), upgrade = c("default", "ask", "always", "never"),
                           SpaDES.project = TRUE, ...) {
-  srch <- search()
+  # srch <- loadedNamespaces()
   basePkgs <- dir(tail(.libPaths(), 1))
   basePkgs <- c(basePkgs, "GlobalEnv", "Autoloads")
-  nonBase <- lapply(basePkgs, function(bp) {
-    srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
-  })
+  # nonBase <- lapply(basePkgs, function(bp) {
+  #   srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
+  # })
 
-  SpaDES.installDeps <- Require::extractPkgName(
-    Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
-  )
-  srch <- setdiff(srch,
-                  paste0("package:",
-                         c("SpaDES.install",
-                             SpaDES.installDeps)))
-
-  mayNeedRestart <- length(srch) > 0
+  # SpaDES.installDeps <- Require::extractPkgName(
+  #   Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
+  # )
+  # srch <- setdiff(srch,
+  #                 paste0(c("SpaDES.install",
+  #                            SpaDES.installDeps)))
+  #
+  # mayNeedRestart <- length(srch) > 0
   # message(
   #   "It looks like you may need to restart your R session to get an R session without ",
   #   "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
@@ -164,9 +163,8 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 
   spadesPkgs <- c("SpaDES.core", "SpaDES.tools")
   deps <- unique(unlist(Require::pkgDep(spadesPkgs, recursive = TRUE)))
-  if (!is.null(olds) && (
-    any(upgrade[1] %in% c("default", "always", "ask"))
-    ) || isTRUE(upgrade[1])) {
+  if (!is.null(olds) && (any(upgrade[1] %in% c("default", "always", "ask"))) ||
+      isTRUE(upgrade[1])) {
     upgrade <- TRUE
     oldsAreSpaDESDeps <- olds[, "Package"] %in% Require::extractPkgName(deps)
     if (any(oldsAreSpaDESDeps)) {
@@ -190,7 +188,8 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
           if (answer == "n") upgrade = FALSE
         }
         if (isTRUE(upgrade)) {
-          if (mayNeedRestart) {
+          loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
+          if (length(intersect(loadedNS, toUpdate))) {
             message(restartMess)
             out <- readline("Do you want to proceed anyway? Y or N")
             if (!identical("y", tolower(out))) stop(restartMessAtStop)
@@ -216,6 +215,13 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
     removeCache <- TRUE
+    loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
+    if (length(intersect(loadedNS, fromSource))) {
+      message(restartMess)
+      out <- readline("Do you want to proceed anyway? Y or N")
+      if (!identical("y", tolower(out))) stop(restartMessAtStop)
+    }
+
     installSourcePackages(fromSource = fromSource, libPath = libPath)
   }
 
@@ -233,8 +239,11 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     # First check if need anything installed
     anything <- Require(pkgsToInstall, require = FALSE, lib = libPath,
                         install = FALSE, upgrade = FALSE, verbose = TRUE)
-    if (!all(attr(anything, "Require")$installed)) {
-      if (mayNeedRestart) {
+    pkgSituation <- attr(anything, "Require")
+    if (!all(pkgSituation$installed)) {
+      needInstalled <- pkgSituation[!pkgSituation$installed]
+      loadedNS <- setdiff(loadedNamespaces(), basePkgs) # rerun because Rstudio loads behind the scenes
+      if (length(intersect(loadedNS, needInstalled$Package))) {
         message(restartMess)
         out <- readline("Do you want to proceed anyway? Y or N")
         if (!identical("y", tolower(out))) stop(restartMessAtStop)
@@ -316,13 +325,6 @@ installSourcePackages <- function(fromSource = c("rgeos", "rgdal", "terra", "sf"
   depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
 
   repos <- c(CRAN = repos[1])
-  # Binary first
-  if (mayNeedRestart) {
-    message(restartMess)
-    out <- readline("Do you want to proceed anyway? Y or N")
-    if (!identical("y", tolower(out))) stop(restartMessAtStop)
-  }
-
   if (Require:::isWindows() && !isTRUE(forceSourceOnWindows)) {
     Require(unique(c(depsCleanUniq, pkgs)), type = "source", lib = libPath, repos = repos,
             dependencies = FALSE, require = FALSE, upgrade = FALSE)
