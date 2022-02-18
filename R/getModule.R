@@ -75,11 +75,15 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
     }
     out <- unzip(zipFileName, exdir = modulePath) # unzip it
 
-    dirnames <- dirname(out)
-    badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
-    file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
+    if (!is.null(out)) {
+      dirnames <- dirname(out)
+      badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
+      file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
+      message(gitRep, " downloaded and placed in ", repoFullNormalized)
+    } else {
+      warning("The zipfile: ", zipFileName, " failed to unzip for unknown causes")
+    }
     unlink(zipFileName)
-    message(gitRep, " downloaded and placed in ", repoFullNormalized)
     # possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
     # if (file.exists(possRmd)) {
     #   message("To run it, try: \nfile.edit('", possRmd, "')")
