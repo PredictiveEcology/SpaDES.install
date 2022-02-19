@@ -9,7 +9,7 @@ installSpaDES(
   libPath = .libPaths()[1],
   fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
     "Rcpp", "RcppParallel", "cpp11"),
-  versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
+  versions = c("SpaDES.core (>= 1.0.9)", "SpaDES.tools (>= 0.3.9)"),
   dontUpdate = c("scam"),
   upgrade = c("default", "ask", "always", "never"),
   SpaDES.project = TRUE,

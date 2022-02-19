@@ -2,7 +2,7 @@
 % Please edit documentation in R/install.R
 \name{installSourcePackages}
 \alias{installSourcePackages}
-\title{Install spatial packages}
+\title{Install source packages}
 \usage{
 installSourcePackages(
   fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units",
@@ -22,10 +22,16 @@ a few others. Has no effect if}
 \code{install.packages(lib = libPath, ...)}}
 
 \item{repos}{URL of CRAN mirror to use to fetch source packages}
+
+\item{forceSourceOnWindows}{Logical. If \code{TRUE}, then this will install from source on Windows,
+which is often unnecessary for e.g., spatial packages.}
 }
 \description{
-(Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
-liked to these external libraries.
+(Re)install source packages. Dependencies of these packages will not force source
+installs, unless those dependencies are listed in \code{fromSource}. Note, this function
+only has real consequences if the default repository in \code{options(CRAN = "someURL")}
+is set to a binary package repository, and will not affect Windows machines
+unless \code{forceSourceOnWindows} is \code{TRUE}.
 }
 \note{
 if installing on macOS, homebrew installation of GDAL etc. is required.

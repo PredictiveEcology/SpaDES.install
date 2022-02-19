@@ -14,8 +14,17 @@ metadataInModules(
   needUnlist
 )
 }
+\arguments{
+\item{modules}{character vector of module names}
+
+\item{modulePath}{path to directory containing the module(s) named in \code{modules}}
+
+\item{metadataItem}{character identifying the metadata field to extract}
+
+\item{needUnlist}{logical indicating whether to \code{unlist} the resulting metadata look up}
+}
 \value{
-A character vector of sorted, uniqued packages that are identified in all named
+A character vector of sorted, unique packages that are identified in all named
 modules, or if \code{modules} is omitted, then all modules in \code{modulePath}.
 }
 \description{

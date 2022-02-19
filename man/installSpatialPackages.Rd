@@ -19,12 +19,15 @@ installSpatialPackages(
 \item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
 \code{install.packages(lib = libPath, ...)}}
 
-\item{forceWindows}{Logical. If \code{TRUE}, then this will install from source on Windows,
+\item{forceSourceOnWindows}{Logical. If \code{TRUE}, then this will install from source on Windows,
 which is often unnecessary for e.g., spatial packages.}
 }
 \description{
 (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
 liked to these external libraries.
+This uses \code{Require} internally, so it will will not upgrade existing packages.
+If upgrades are needed, remove them first, e.g. with
+\code{remove.packages(c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"))}.
 }
 \note{
 if installing on macOS, homebrew installation of GDAL etc. is required.
