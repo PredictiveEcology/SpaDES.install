@@ -223,7 +223,6 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   }
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
-
     depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
     depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
     depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
@@ -238,7 +237,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
     # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
     # Source second
-    opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
+    opt <- options("repos" = c(CRAN = "https://cran.rstudio.com", options("repos")$repos))
     on.exit({
       options(opt)
     }, add = TRUE)
