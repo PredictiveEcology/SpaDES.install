@@ -1,6 +1,5 @@
 .pkgEnv <- new.env(parent = emptyenv())
 
-
 splitGitRepo <- function(gitRepo) {
   grSplit <- strsplit(gitRepo, "/|@")[[1]]
   grAcct <- strsplit(gitRepo, "/")[[1]] # only account and repo
@@ -50,7 +49,8 @@ installGithubPackage <- function(gitRepo, libPath = .libPaths()[1]) {
     if (is.na(packageTarName)) { # linux didn't have that character
       packageTarName <- gsub(paste0("^.*(", gr$repo, ".*tar.gz).*$"), "\\1", buildingLine)
     }
-    system(paste0("R CMD INSTALL --library=", normalizePath(libPath, winslash = "/"), " ", packageTarName), wait = TRUE)
+    system(paste0("R CMD INSTALL --library=", normalizePath(libPath, winslash = "/"), " ",
+                  packageTarName), wait = TRUE)
   } else {
     message("Can't install packages this way because R is not on the search path")
   }
@@ -167,7 +167,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     oldsAreSpaDESDeps <- olds[, "Package"] %in% Require::extractPkgName(deps)
     if (any(oldsAreSpaDESDeps)) {
       olds <- olds[oldsAreSpaDESDeps,, drop = FALSE]
-      # Don't try to update the dependencies of SpaDES.install (which are currently Require, data.table, remotes)
+      ## Don't try to update SpaDES.install dependencies (currently: Require, data.table, remotes)
       toUpdate <- setdiff(olds[, "Package"], dontUpdate)
       dontUpdate <- intersect(SpaDES.installDeps, toUpdate)
       if (length(dontUpdate)) {
