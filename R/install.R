@@ -35,11 +35,9 @@ installGithubPackage <- function(gitRepo, libPath = .libPaths()[1]) {
   modulePath <- file.path(tempdir(), paste0(sample(LETTERS, 8), collapse = ""))
   dir.create(modulePath, recursive = TRUE)
 
-  # deal with dependencies
-  # The next line makes an object exist in the Require:::.pkgEnv that will break the following
-  #    line if it isn't there.
-  workaround <- Require:::DESCRIPTIONFileVersionV(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
-  Deps <- Require:::DESCRIPTIONFileDeps(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
+  ## deal with dependencies
+  workaround <- DESCRIPTIONFileVersionV(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
+  Deps <- DESCRIPTIONFileDeps(Require::getGitHubDESCRIPTION(gitRepo)$DESCFile)
 
   Require(Deps, require = FALSE, install = TRUE)
 
@@ -96,33 +94,24 @@ installGitHubPackage <- installGithubPackage
 installSpaDES <- function(type, libPath = .libPaths()[1],
                           fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
                                          "Rcpp", "RcppParallel", "cpp11"),
-                          versions = c("SpaDES.core (>=1.0.9)", "SpaDES.tools (>= 0.3.9)"),
+                          versions = c("SpaDES.core (>= 1.0.9)", "SpaDES.tools (>= 0.3.9)"),
                           dontUpdate = c("scam"), upgrade = c("default", "ask", "always", "never"),
                           SpaDES.project = TRUE, ...) {
-  srch <- search()
+  # srch <- loadedNamespaces()
   basePkgs <- dir(tail(.libPaths(), 1))
   basePkgs <- c(basePkgs, "GlobalEnv", "Autoloads")
-  nonBase <- lapply(basePkgs, function(bp) {
-    srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
-  })
+  # nonBase <- lapply(basePkgs, function(bp) {
+  #   srch <<- grep(bp, srch, value = TRUE, invert = TRUE)
+  # })
 
   SpaDES.installDeps <- Require::extractPkgName(
     Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
   )
-  srch <- setdiff(srch,
-                  paste0("package:",
-                         c("SpaDES.install",
-                             SpaDES.installDeps)))
-
-  mayNeedRestart <- length(srch) > 0
-  restartMess <- paste0(
-    "It looks like you may need to restart your R session to get an R session without ",
-    "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
-    "If you are using RStudio and you are unable to restart without",
-    "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
-    " R session."
-  )
-  restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
+  # srch <- setdiff(srch,
+  #                 paste0(c("SpaDES.install",
+  #                            SpaDES.installDeps)))
+  #
+  # mayNeedRestart <- length(srch) > 0
   # message(
   #   "It looks like you may need to restart your R session to get an R session without ",
   #   "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
@@ -172,9 +161,8 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 
   spadesPkgs <- c("SpaDES.core", "SpaDES.tools")
   deps <- unique(unlist(Require::pkgDep(spadesPkgs, recursive = TRUE)))
-  if (!is.null(olds) && (
-    any(upgrade[1] %in% c("default", "always", "ask"))
-    ) || isTRUE(upgrade[1])) {
+  if (!is.null(olds) && (any(upgrade[1] %in% c("default", "always", "ask"))) ||
+      isTRUE(upgrade[1])) {
     upgrade <- TRUE
     oldsAreSpaDESDeps <- olds[, "Package"] %in% Require::extractPkgName(deps)
     if (any(oldsAreSpaDESDeps)) {
@@ -188,17 +176,17 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
       if (length(toUpdate)) {
         toUpdateDF <- as.data.frame(olds[olds[,"Package"] %in% toUpdate,, drop = FALSE])
         toUpdateDF <- toUpdateDF[, c("Package", "Installed", "ReposVer")]
-        toUpdateDF <- data.frame(toUpdateDF$Package, toUpdateDF$Installed, "-->",
-                                 toUpdateDF$ReposVer)
+        toUpdateDF <- data.frame(toUpdateDF$Package, toUpdateDF$Installed, "-->", toUpdateDF$ReposVer)
         colnames(toUpdateDF) <- c("Package", "Installed Version", "  ", "Available Version")
-        Require:::messageDF(toUpdateDF)
+        messageDF(toUpdateDF)
         if (isTRUE(ask)) {
           answer <- readline("Proceed with upgrades to packages? (Y or N)")
           answer <- tolower(answer)
           if (answer == "n") upgrade = FALSE
         }
         if (isTRUE(upgrade)) {
-          if (mayNeedRestart) {
+          loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
+          if (length(intersect(loadedNS, toUpdate))) {
             message(restartMess)
             out <- readline("Do you want to proceed anyway? Y or N")
             if (!identical("y", tolower(out))) stop(restartMessAtStop)
@@ -223,33 +211,18 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   }
 
   if (!isWin && any(!dir.exists(file.path(.libPaths()[1], fromSource)))) {
-    depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
-    depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
-    depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
-
-    # Binary first
     removeCache <- TRUE
-    if (mayNeedRestart) {
+    loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
+    if (length(intersect(loadedNS, fromSource))) {
       message(restartMess)
       out <- readline("Do you want to proceed anyway? Y or N")
       if (!identical("y", tolower(out))) stop(restartMessAtStop)
     }
-    Require(depsCleanUniq, dependencies = FALSE, lib = libPath, require = FALSE, upgrade = FALSE)
-    # install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath)
-    # Source second
-    opt <- options("repos" = c(CRAN = "https://cran.rstudio.com", options("repos")$repos))
-    on.exit({
-      options(opt)
-    }, add = TRUE)
-    Require(fromSource, type = "source", lib = libPath,
-            dependencies = FALSE, require = FALSE, upgrade = FALSE)
-    options(opt)
 
-    # install.packages(fromSource, type = "source", lib = libPath, repos = "https://cran.rstudio.com")
+    installSourcePackages(fromSource = fromSource, libPath = libPath)
   }
 
   if (length(args[[1]])) {
-
     pkgsToInstall <- unique(c(args[[1]], deps))
     if (length(versions) > 0) {
       mm <- match(Require::extractPkgName(versions), pkgsToInstall)
@@ -260,15 +233,18 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
       pkgsToInstall <- c(pkgsToInstall, "PredictiveEcology/SpaDES.project")
     }
     # First check if need anything installed
-    anything <- Require(pkgsToInstall, require = FALSE, lib = libPath,
+    anything <- Require(pkgsToInstall, require = FALSE, libPaths = libPath,
                         install = FALSE, upgrade = FALSE, verbose = TRUE)
-    if (!all(attr(anything, "Require")$installed)) {
-      if (mayNeedRestart) {
+    pkgSituation <- attr(anything, "Require")
+    if (!all(pkgSituation$installed)) {
+      needInstalled <- pkgSituation[!pkgSituation$installed]
+      loadedNS <- setdiff(loadedNamespaces(), basePkgs) # rerun because Rstudio loads behind the scenes
+      if (length(intersect(loadedNS, needInstalled$Package))) {
         message(restartMess)
         out <- readline("Do you want to proceed anyway? Y or N")
         if (!identical("y", tolower(out))) stop(restartMessAtStop)
       }
-      anything <- Require(pkgsToInstall, require = FALSE, lib = libPath, upgrade = FALSE,
+      anything <- Require(pkgsToInstall, require = FALSE, libPaths = libPath, upgrade = FALSE,
                           verbose = TRUE)
       if (any(!is.na(attr(anything, "Require")$installFrom)))
         removeCache <- TRUE
@@ -282,15 +258,18 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 #'
 #' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
 #' liked to these external libraries.
-#'
-#' @param repos URL of CRAN mirror to use to fetch source packages
+#' This uses \code{Require} internally, so it will will not upgrade existing packages.
+#' If upgrades are needed, remove them first, e.g. with
+#' \code{remove.packages(c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"))}.
 #'
 #' @param pkgs Character vector of package names to install using `type = "source"`
 #'
-#' @param forceWindows Logical. If `TRUE`, then this will install from source on Windows,
-#'   which is often unnecessary for e.g., spatial packages.
+#' @param repos URL of CRAN mirror to use to fetch source packages
 #'
 #' @inheritParams installSpaDES
+#'
+#' @param forceSourceOnWindows Logical. If `TRUE`, then this will install from source on Windows,
+#'   which is often unnecessary for e.g., spatial packages.
 #'
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
@@ -298,7 +277,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
 installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "lwgeom", "sf", "rgdal"),
                                    repos = "https://cloud.r-project.org",
                                    libPath = .libPaths()[1],
-                                   forceWindows = FALSE) {
+                                   forceSourceOnWindows = FALSE) {
   ## rgdal and sf need additional args for homebrew on macOS
   origPkgs <- pkgs
   if (Sys.info()[["sysname"]] == "Darwin") {
@@ -311,42 +290,53 @@ installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "l
                      configure.args = "--with-proj-lib=/usr/local/lib/")
     pkgs <- setdiff(pkgs, c("rgdal", "sf"))
   }
-  installSourcePackages(pkgs, repos = repos, libPath = libPath, forceWindows = forceWindows)
+  installSourcePackages(pkgs, repos = repos, libPath = libPath, forceSourceOnWindows = forceSourceOnWindows)
 
   return(invisible())
 }
 
-
-
-#' Install spatial packages
+#' Install source packages
 #'
-#' (Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
-#' liked to these external libraries.
+#' (Re)install source packages. Dependencies of these packages will not force source
+#' installs, unless those dependencies are listed in \code{fromSource}. Note, this function
+#' only has real consequences if the default repository in \code{options(CRAN = "someURL")}
+#' is set to a binary package repository, and will not affect Windows machines
+#' unless \code{forceSourceOnWindows} is \code{TRUE}.
+#'
+#' @inheritParams installSpaDES
 #'
 #' @param repos URL of CRAN mirror to use to fetch source packages
+#'
+#' @param forceSourceOnWindows Logical. If `TRUE`, then this will install from source on Windows,
+#'   which is often unnecessary for e.g., spatial packages.
 #'
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
 #' @export
-installSourcePackages <- function(pkgs = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
-                                           "igraph", "units", "qs",
-                                           "Rcpp", "RcppParallel", "cpp11"),
-                                  libPath = .libPaths()[1],
-                                  repos = "https://cloud.r-project.org",
-                                  forceWindows = FALSE) {
+installSourcePackages <- function(fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
+                                                 "igraph", "units", "qs", "Rcpp", "RcppParallel", "cpp11"),
+                                  libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
+                                  forceSourceOnWindows = FALSE) {
+  depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
+  depsCleanUniq <- sort(unique(Require::extractPkgName(depsClean)))
+  depsCleanUniq <- setdiff(depsCleanUniq, fromSource)
 
-  depsCleanUniq <- extractDepsOnly(pkgs)
-
-  if (Require:::isWindows() && !isTRUE(forceWindows)) {
-    install.packages(unique(c(depsCleanUniq, pkgs)),
-                     lib = libPath, repos = repos)
+  repos <- c(CRAN = repos[1])
+  if (isWindows() && !isTRUE(forceSourceOnWindows)) {
+    Require(unique(c(depsCleanUniq, fromSource)), type = "source", libPaths = libPath, repos = repos,
+            dependencies = FALSE, require = FALSE, upgrade = FALSE)
   } else {
-    # Binary first
-    install.packages(depsCleanUniq, dependencies = FALSE, lib = libPath, repos = repos)
+    Require(depsCleanUniq, dependencies = FALSE, libPaths = libPath, require = FALSE, upgrade = FALSE)
+    # install.packages(depsCleanUniq, dependencies = FALSE, libPaths = libPath)
     # Source second
-    install.packages(pkgs, type = "source", lib = libPath, repos = repos)
+    # opt <- options("repos" = c(CRAN ="https://cran.rstudio.com", options("repos")$repos))
+    # on.exit({
+    #   options(opt)
+    # }, add = TRUE)
+    Require(fromSource, type = "source", libPaths = libPath, repos = repos,
+            dependencies = FALSE, require = FALSE, upgrade = FALSE)
   }
-  # install.packages(pkgs, type = "source", repos = repos)
+  # options(opt)
 }
 
 extractDepsOnly <- function(pkgs) {
@@ -355,3 +345,12 @@ extractDepsOnly <- function(pkgs) {
   depsCleanUniq <- setdiff(depsCleanUniq, pkgs)
   depsCleanUniq
 }
+
+restartMess <- paste0(
+  "It looks like you may need to restart your R session to get an R session without ",
+  "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+  "If you are using RStudio and you are unable to restart without",
+  "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
+  " R session."
+)
+restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"

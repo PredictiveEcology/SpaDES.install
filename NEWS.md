@@ -1,5 +1,10 @@
 Known issues: https://github.com/PredictiveEcology/SpaDES.install/issues
 
+version 0.0.7
+=============
+
+* `installSourcePackages` is now "rerun proof", unlike previous version of `installSourcePackages`, as it uses `Require` internally
+
 version 0.0.6
 =============
 

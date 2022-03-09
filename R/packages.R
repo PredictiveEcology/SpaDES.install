@@ -132,26 +132,35 @@ makeSureAllPackagesInstalled <- function(modulePath) {
 #' Parses module code, looking for the `metadataItem` (default = `"reqdPkgs"`)
 #' element in the `defineModule` function.
 #'
-#' @return
-#' A character vector of sorted, uniqued packages that are identified in all named
+#' @param modules character vector of module names
+#'
+#' @param modulePath path to directory containing the module(s) named in `modules`
+#'
+#' @return A character vector of sorted, unique packages that are identified in all named
 #' modules, or if `modules` is omitted, then all modules in `modulePath`.
 #'
-#' @rdname metadata
 #' @export
+#' @rdname metadata
 packagesInModules <- function(modules, modulePath = getOption("spades.modulePath")) {
   metadataInModules(modulePath = modulePath, modules = modules, metadataItem = "reqdPkgs")
 }
 
-#' @rdname metadata
+#' @param metadataItem character identifying the metadata field to extract
+#'
+#' @param needUnlist logical indicating whether to `unlist` the resulting metadata look up
+#'
 #' @export
-metadataInModules <- function(modules, metadataItem = "reqdPkgs", modulePath = getOption("spades.modulePath"),
-                              needUnlist) {
+#' @rdname metadata
+metadataInModules <- function(modules, metadataItem = "reqdPkgs",
+                              modulePath = getOption("spades.modulePath"), needUnlist) {
   if (missing(modules))
     modules <- dir(modulePath)
   names(modules) <- modules
 
   if (any(metadataItem %in% c("inputObjects", "outputObjects", "parameters"))) {
-    if (!require("SpaDES.core", quietly = TRUE)) stop("To evaluate that metadataItem, please install SpaDES.core")
+    if (!requireNamespace("SpaDES.core", quietly = TRUE)) {
+      stop("To evaluate that metadataItem, please install package 'SpaDES.core'.")
+    }
   }
   if (missing(needUnlist)) {
     needUnlistInner <- switch(metadataItem, reqdPkgs = TRUE, version = FALSE, authors = FALSE, FALSE)

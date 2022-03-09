@@ -37,7 +37,7 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
     if (dir.exists(repoFull)) {
       versionOK <- FALSE
       if (!is.na(vn)) {
-        fn <- Require:::getGitHubFile(paste0(gr$acct,"/",gr$repo,"@",gr$br), filename = paste0(gr$repo, ".R"))
+        fn <- getGitHubFile(paste0(gr$acct, "/", gr$repo, "@", gr$br), filename = paste0(gr$repo, ".R"))
         dircreated <- Require::checkPath(file.path(dirname(fn$destFile), gr$repo), create = TRUE)
         newTempName <- file.path(dircreated, paste0(gr$repo, ".R"))
         file.rename(fn$destFile, newTempName)
@@ -53,12 +53,16 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
         message(repoFullNormalized, " exists; overwriting")
         unlink(repoFullNormalized, recursive = TRUE)
       } else {
-        if (versionOK)
-          message(repoFullNormalized, " directory already exists, overwrite = TRUE, but version number is OK. Not overwriting. ",
-                  "To overwrite, either delete the module manually, change the minimum version number, ",
-                  "or remove version number comparison")
-        else
+        if (versionOK) {
+          message(
+            repoFullNormalized,
+            " directory already exists, overwrite = TRUE, but version number is OK. Not overwriting. ",
+            "To overwrite, either delete the module manually, change the minimum version number, ",
+            "or remove version number comparison"
+          )
+        } else {
           message(repoFullNormalized, " directory already exists. Use overwrite = TRUE if you want to overwrite it")
+        }
         return(repoFullNormalized)
       }
     }
@@ -75,11 +79,15 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
     }
     out <- unzip(zipFileName, exdir = modulePath) # unzip it
 
-    dirnames <- dirname(out)
-    badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
-    file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
+    if (!is.null(out)) {
+      dirnames <- dirname(out)
+      badDirname <- unique(dirnames)[which.min(nchar(unique(dirnames)))]
+      file.rename(badDirname, gsub(basename(badDirname), gr$repo, badDirname)) # it was downloaded with a branch suffix
+      message(gitRep, " downloaded and placed in ", repoFullNormalized)
+    } else {
+      warning("The zipfile: ", zipFileName, " failed to unzip for unknown causes")
+    }
     unlink(zipFileName)
-    message(gitRep, " downloaded and placed in ", repoFullNormalized)
     # possRmd <- normalizePath(winslash = "/", file.path(repoFull, paste0(gr$repo, ".Rmd")), mustWork = FALSE)
     # if (file.exists(possRmd)) {
     #   message("To run it, try: \nfile.edit('", possRmd, "')")

@@ -2,22 +2,36 @@
 % Please edit documentation in R/install.R
 \name{installSourcePackages}
 \alias{installSourcePackages}
-\title{Install spatial packages}
+\title{Install source packages}
 \usage{
 installSourcePackages(
-  pkgs = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units", "qs",
-    "Rcpp", "RcppParallel", "cpp11"),
+  fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units",
+    "qs", "Rcpp", "RcppParallel", "cpp11"),
   libPath = .libPaths()[1],
   repos = "https://cloud.r-project.org",
-  forceWindows = FALSE
+  forceSourceOnWindows = FALSE
 )
 }
 \arguments{
+\item{fromSource}{A character vector of packages that must be installed from
+source on Linux-alikes, even if the \code{options("repos")} is pointing to a binary
+repository of binary packages. The default is all the spatial packages, plus
+a few others. Has no effect if}
+
+\item{libPath}{Passed to both \code{update.packages(lib.lob = libPath)} and
+\code{install.packages(lib = libPath, ...)}}
+
 \item{repos}{URL of CRAN mirror to use to fetch source packages}
+
+\item{forceSourceOnWindows}{Logical. If \code{TRUE}, then this will install from source on Windows,
+which is often unnecessary for e.g., spatial packages.}
 }
 \description{
-(Re)install spatial packages that require GDAL/GEOS/PROJ, from source to ensure they are properly
-liked to these external libraries.
+(Re)install source packages. Dependencies of these packages will not force source
+installs, unless those dependencies are listed in \code{fromSource}. Note, this function
+only has real consequences if the default repository in \code{options(CRAN = "someURL")}
+is set to a binary package repository, and will not affect Windows machines
+unless \code{forceSourceOnWindows} is \code{TRUE}.
 }
 \note{
 if installing on macOS, homebrew installation of GDAL etc. is required.
