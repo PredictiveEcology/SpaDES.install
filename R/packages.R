@@ -59,7 +59,13 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     })
 
     AllPackagesUnlisted <- unique(unname(unlist(AllPackages)))
-    out <- Require::Require(require = FALSE, AllPackagesUnlisted, install = FALSE, verbose = TRUE)
+
+    AllPackagesUnlistedRecursive <- Require::pkgDep(AllPackagesUnlisted, recursive = TRUE)
+    AllPackagesUnlistedRecursive <- unique(c(names(AllPackagesUnlistedRecursive),
+                  unlist(AllPackagesUnlistedRecursive)))
+
+    out <- Require::Require(require = FALSE, AllPackagesUnlistedRecursive,
+                            install = FALSE, verbose = TRUE)
     out <- attr(out, "Require")
 
     # Note this will return NA if there is no version specification
