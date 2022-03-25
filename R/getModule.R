@@ -43,11 +43,15 @@ getModule <- function(..., overwrite = FALSE, modulePath) {
         file.rename(fn$destFile, newTempName)
         verOnline <- metadataInModules(gr$repo, "version", modulePath = dirname(dircreated))
         verInstalled <- metadataInModules(gr$repo, "version", modulePath = modulePath)
-        compVersOnline <- compareVersion(as.character(verOnline[[gr$repo]]), vn)
-        compVersInstalled <- compareVersion(as.character(verInstalled[[gr$repo]]), vn)
-        versionOnlineOK <- eval(parse(text = paste0(compVersOnline, inequ, 0)))
-        if (!versionOnlineOK) message("Version request cannot be satisfied at ", gitRepOrig)
-        versionOK <- eval(parse(text = paste0(compVersInstalled, inequ, 0)))
+        if (!is.null(verInstalled)) {
+          compVersOnline <- compareVersion(as.character(verOnline[[gr$repo]]), vn)
+          compVersInstalled <- compareVersion(as.character(verInstalled[[gr$repo]]), vn)
+          versionOnlineOK <- eval(parse(text = paste0(compVersOnline, inequ, 0)))
+          if (!versionOnlineOK) message("Version request cannot be satisfied at ", gitRepOrig)
+          versionOK <- eval(parse(text = paste0(compVersInstalled, inequ, 0)))
+        } else {
+          versionOK <- FALSE
+        }
       }
       if (isTRUE(overwriteInner) && !versionOK) {
         message(repoFullNormalized, " exists; overwriting")
