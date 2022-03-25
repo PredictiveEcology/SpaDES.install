@@ -2,6 +2,7 @@ Known issues: https://github.com/PredictiveEcology/SpaDES.install/issues
 
 version 0.0.8
 =============
+* experimental restart R session if it is Rstudio if packages are loaded that need updating.
 * bugfix `makeSureAllPackagesInstalled` missed some recursive dependencies. Now fixed.
 * bugfix `getModule` was errored if module version number of a module was requested, but it wasn't already locally installed
 

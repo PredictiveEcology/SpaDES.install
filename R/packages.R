@@ -109,7 +109,9 @@ makeSureAllPackagesInstalled <- function(modulePath) {
             try(unloadNamespace(x), silent = TRUE)
           })
           rm(list = setdiff(ls(), "modulePath"))
-          rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",modulePath,"')"))
+          if (isRstudio()) {
+            rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",modulePath,"')"))
+          }
         }
         obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
         saveRDS(obj, file = AllPackagesFile)
@@ -232,4 +234,15 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs",
       vals <- vals2[!dups]
   }
   vals
+}
+
+isRstudio <- function () {
+  Sys.getenv("RSTUDIO") == 1 || .Platform$GUI == "RStudio" ||
+    if (suppressWarnings(requireNamespace("rstudioapi",
+                                          quietly = TRUE))) {
+      rstudioapi::isAvailable()
+    }
+  else {
+    FALSE
+  }
 }
