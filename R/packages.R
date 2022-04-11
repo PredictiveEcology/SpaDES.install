@@ -59,7 +59,13 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     })
 
     AllPackagesUnlisted <- unique(unname(unlist(AllPackages)))
-    out <- Require::Require(require = FALSE, AllPackagesUnlisted, install = FALSE, verbose = TRUE)
+
+    AllPackagesUnlistedRecursive <- Require::pkgDep(AllPackagesUnlisted, recursive = TRUE)
+    AllPackagesUnlistedRecursive <- unique(c(names(AllPackagesUnlistedRecursive),
+                  unlist(AllPackagesUnlistedRecursive)))
+
+    out <- Require::Require(require = FALSE, AllPackagesUnlistedRecursive,
+                            install = FALSE, verbose = TRUE)
     out <- attr(out, "Require")
 
     # Note this will return NA if there is no version specification
@@ -82,19 +88,36 @@ makeSureAllPackagesInstalled <- function(modulePath) {
     dtLoaded <- data.table::data.table(Package = names(anyLoaded), loaded = anyLoaded)
     out <- dtLoaded[out, on = "Package"]
     needAction <- !okVersion | !okInstalled
+
     if (any(needAction)) {
       data.table::set(out, NULL, "needAction", FALSE)
       out[needAction, needAction := TRUE]
 
       doInstallsNow <- FALSE
-      if (all((needAction) & out$loaded)) {
-        obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
-        saveRDS(obj, file = AllPackagesFile)
+      if (any(out[needAction == TRUE]$loaded)) {
         message("The following packages are in an incorrect state: ")
         get("messageDF", envir = asNamespace("Require"))(print(out[needAction == TRUE]))
+        ans <- readline("Would you like to, unload packages and current environment, then restart R? (Y or N): ")
+        if (startsWith(tolower(ans), "y")) {
+          #if (!require("Require")) {install.packages("Require"); require("Require")}
+          #Require("PredictiveEcology/SpaDES.install@development (>= 0.0.7.9000)")
+          ln <- setdiff(unique(c(search(), loadedNamespaces())), Require:::.basePkgs)
+          a <- suppressMessages(Require::pkgDepTopoSort(ln))
+          message("Trying to detach packages and restart; it may cause R to crash; rerun command without loading any packages")
+          out <- lapply(rev(names(a)), function(x) {
+            try(detach(paste0("package:", x), unload = TRUE, character.only = TRUE), silent = TRUE)
+            try(unloadNamespace(x), silent = TRUE)
+          })
+          rm(list = setdiff(ls(), "modulePath"))
+          if (isRstudio()) {
+            rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",modulePath,"')"))
+          }
+        }
+        obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
+        saveRDS(obj, file = AllPackagesFile)
         stop("Restart R; Run this function again immediately.", call. = FALSE)
       }
-      Require::Require(out[needAction]$packageFullName,
+      Require::Require(out[needAction == TRUE]$packageFullName,
         require = FALSE,
         upgrade = FALSE
       )
@@ -211,4 +234,15 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs",
       vals <- vals2[!dups]
   }
   vals
+}
+
+isRstudio <- function () {
+  Sys.getenv("RSTUDIO") == 1 || .Platform$GUI == "RStudio" ||
+    if (suppressWarnings(requireNamespace("rstudioapi",
+                                          quietly = TRUE))) {
+      rstudioapi::isAvailable()
+    }
+  else {
+    FALSE
+  }
 }
