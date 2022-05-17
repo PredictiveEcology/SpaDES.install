@@ -1,5 +1,10 @@
 Known issues: https://github.com/PredictiveEcology/SpaDES.install/issues
 
+version 0.0.9
+=============
+* update list of source packages 
+* new function: `sourcePkgs()` which can be updated easily by user.
+
 version 0.0.8
 =============
 * experimental restart R session if it is Rstudio if packages are loaded that need updating.
