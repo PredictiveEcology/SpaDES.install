@@ -92,7 +92,7 @@ installGitHubPackage <- installGithubPackage
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(type, libPath = .libPaths()[1],
-                          fromSource = sourcePkgs,
+                          fromSource = sourcePkgs(),
                           versions = c("SpaDES.core (>= 1.0.9)", "SpaDES.tools (>= 0.3.9)"),
                           dontUpdate = c("scam"),
                           upgrade = c("default", "ask", "always", "never"),
@@ -313,7 +313,7 @@ installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "l
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
 #' @export
-installSourcePackages <- function(fromSource = sourcePkgs,
+installSourcePackages <- function(fromSource = sourcePkgs(),
                                   libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
                                   forceSourceOnWindows = FALSE) {
   depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
