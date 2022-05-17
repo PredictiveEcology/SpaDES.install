@@ -92,10 +92,10 @@ installGitHubPackage <- installGithubPackage
 #' @export
 #' @importFrom utils install.packages installed.packages old.packages packageVersion tail
 installSpaDES <- function(type, libPath = .libPaths()[1],
-                          fromSource = c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "qs", "sp",
-                                         "Rcpp", "RcppParallel", "cpp11"),
+                          fromSource = sourcePkgs,
                           versions = c("SpaDES.core (>= 1.0.9)", "SpaDES.tools (>= 0.3.9)"),
-                          dontUpdate = c("scam"), upgrade = c("default", "ask", "always", "never"),
+                          dontUpdate = c("scam"),
+                          upgrade = c("default", "ask", "always", "never"),
                           SpaDES.project = TRUE, ...) {
   # srch <- loadedNamespaces()
   basePkgs <- dir(tail(.libPaths(), 1))
@@ -313,8 +313,7 @@ installSpatialPackages <- function(pkgs = c("rgeos", "sp", "raster", "terra", "l
 #' @note if installing on macOS, homebrew installation of GDAL etc. is required.
 #'
 #' @export
-installSourcePackages <- function(fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster",
-                                                 "igraph", "units", "qs", "Rcpp", "RcppParallel", "cpp11"),
+installSourcePackages <- function(fromSource = sourcePkgs,
                                   libPath = .libPaths()[1], repos = "https://cloud.r-project.org",
                                   forceSourceOnWindows = FALSE) {
   depsClean <- unlist(unname(Require::pkgDep(fromSource, recursive = TRUE)))
@@ -354,3 +353,13 @@ restartMess <- paste0(
   " R session."
 )
 restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
+
+#' Character vector of packages that must be installed from source in Linux-alikes
+#'
+#' @export
+#' @param additional Character string indicating additional packages to add to the
+#'   default set (to see default set, run \code{sourcePkgs()}).
+#'
+sourcePkgs <- function(additional = "")
+  c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "stringfish",
+                "qs", "sp", "Rcpp", "RcppParallel", "cpp11", "lwgeom", additional)
