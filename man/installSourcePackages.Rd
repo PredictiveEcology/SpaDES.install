@@ -5,8 +5,7 @@
 \title{Install source packages}
 \usage{
 installSourcePackages(
-  fromSource = c("rgeos", "rgdal", "terra", "sf", "sp", "raster", "igraph", "units",
-    "qs", "Rcpp", "RcppParallel", "cpp11"),
+  fromSource = sourcePkgs,
   libPath = .libPaths()[1],
   repos = "https://cloud.r-project.org",
   forceSourceOnWindows = FALSE
