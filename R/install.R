@@ -360,6 +360,6 @@ restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
 #' @param additional Character string indicating additional packages to add to the
 #'   default set (to see default set, run \code{sourcePkgs()}).
 #'
-sourcePkgs <- function(additional = "")
+sourcePkgs <- function(additional = NULL)
   c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "stringfish",
                 "qs", "sp", "Rcpp", "RcppParallel", "cpp11", "lwgeom", additional)

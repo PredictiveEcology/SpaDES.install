@@ -4,7 +4,7 @@
 \alias{sourcePkgs}
 \title{Character vector of packages that must be installed from source in Linux-alikes}
 \usage{
-sourcePkgs(additional = "")
+sourcePkgs(additional = NULL)
 }
 \arguments{
 \item{additional}{Character string indicating additional packages to add to the

@@ -5,7 +5,7 @@
 \title{Install source packages}
 \usage{
 installSourcePackages(
-  fromSource = sourcePkgs,
+  fromSource = sourcePkgs(),
   libPath = .libPaths()[1],
   repos = "https://cloud.r-project.org",
   forceSourceOnWindows = FALSE

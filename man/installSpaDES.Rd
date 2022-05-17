@@ -7,7 +7,7 @@
 installSpaDES(
   type,
   libPath = .libPaths()[1],
-  fromSource = sourcePkgs,
+  fromSource = sourcePkgs(),
   versions = c("SpaDES.core (>= 1.0.9)", "SpaDES.tools (>= 0.3.9)"),
   dontUpdate = c("scam"),
   upgrade = c("default", "ask", "always", "never"),
