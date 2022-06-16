@@ -352,7 +352,7 @@ restartMess <- paste0(
   "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
   " R session."
 )
-restartMessAtStop <- "Try to restart R with Ctrl-Alt-F10 if you are in RStudio"
+restartMessAtStop <- "Try to restart R with Ctrl-Shift-F10 (⌘-Shift-F10) if you are in RStudio"
 
 #' Character vector of packages that must be installed from source in Linux-alikes
 #'
