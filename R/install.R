@@ -119,7 +119,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   #   "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
   #   " R session."
   # )
-  # out <- readline("Do you want to proceed anyway? Y or N")
+  # out <- readline("Do you want to proceed anyway (Y or N)? ")
   # if (!identical("y", tolower(out))) {
   #   stop("Try to restart R with Ctrl-Alt-F10 if you are in RStudio")
   # }
@@ -188,7 +188,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
           loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
           if (length(intersect(loadedNS, toUpdate))) {
             message(restartMess)
-            out <- readline("Do you want to proceed anyway? Y or N")
+            out <- readline("Do you want to proceed anyway (Y or N)? ")
             if (!identical("y", tolower(out))) stop(restartMessAtStop)
           }
           message("updating packages ... ",
@@ -215,7 +215,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
     if (length(intersect(loadedNS, fromSource))) {
       message(restartMess)
-      out <- readline("Do you want to proceed anyway? Y or N")
+      out <- readline("Do you want to proceed anyway (Y or N)? ")
       if (!identical("y", tolower(out))) stop(restartMessAtStop)
     }
 
@@ -241,7 +241,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
       loadedNS <- setdiff(loadedNamespaces(), basePkgs) # rerun because Rstudio loads behind the scenes
       if (length(intersect(loadedNS, needInstalled$Package))) {
         message(restartMess)
-        out <- readline("Do you want to proceed anyway? Y or N")
+        out <- readline("Do you want to proceed anyway (Y or N)? ")
         if (!identical("y", tolower(out))) stop(restartMessAtStop)
       }
       anything <- Require(pkgsToInstall, require = FALSE, libPaths = libPath, upgrade = FALSE,
