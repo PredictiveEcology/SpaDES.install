@@ -72,7 +72,7 @@ makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE) {
     AllPackagesUnlistedRecursive <- Require::pkgDep(AllPackagesUnlisted, recursive = TRUE)
     AllPackagesUnlistedRecursive <- unique(c(names(AllPackagesUnlistedRecursive),
                                              unlist(AllPackagesUnlistedRecursive)))
-    unduplicateDT <- data.table(toPkgDT(toPkgDT(sort(AllPackagesUnlistedRecursive))), installed = FALSE,
+    unduplicateDT <- data.table::data.table(Require::toPkgDT(sort(AllPackagesUnlistedRecursive)), installed = FALSE,
                                 installFrom = "CRAN", installResult = TRUE)
     unduplicated <- suppressMessages(rmDuplicatePkgs(unduplicateDT)[duplicate == FALSE]$packageFullName)
     if (doInstalls) {
