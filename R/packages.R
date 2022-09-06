@@ -65,6 +65,9 @@ makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE) {
     AllPackagesUnlisted <- unique(unname(unlist(AllPackages)))
 
     messageDF <- get("messageDF", envir = asNamespace("Require"))
+    rmDuplicatePkgs <- get("rmDuplicatePkgs", envir = asNamespace("Require"))
+    toPkgDT <- get("toPkgDT", envir = asNamespace("Require"))
+
     message("Modules need the following packages: \n",
             paste(sort(AllPackagesUnlisted), collapse = ", "))
     message("  ")
@@ -72,9 +75,9 @@ makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE) {
     AllPackagesUnlistedRecursive <- Require::pkgDep(AllPackagesUnlisted, recursive = TRUE)
     AllPackagesUnlistedRecursive <- unique(c(names(AllPackagesUnlistedRecursive),
                                              unlist(AllPackagesUnlistedRecursive)))
-    unduplicateDT <- data.table::data.table(Require::toPkgDT(sort(AllPackagesUnlistedRecursive)), installed = FALSE,
+    unduplicateDT <- data.table::data.table(toPkgDT(sort(AllPackagesUnlistedRecursive)), installed = FALSE,
                                 installFrom = "CRAN", installResult = TRUE)
-    unduplicated <- suppressMessages(Require::rmDuplicatePkgs(unduplicateDT)[duplicate == FALSE]$packageFullName)
+    unduplicated <- suppressMessages(rmDuplicatePkgs(unduplicateDT)[duplicate == FALSE]$packageFullName)
     if (doInstalls) {
       out <- Require::Require(require = FALSE, unduplicated,
                               install = FALSE, verbose = TRUE)
