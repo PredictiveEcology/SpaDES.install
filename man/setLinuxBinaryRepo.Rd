@@ -5,7 +5,7 @@
 \title{Setup for binary linux repositories}
 \usage{
 setLinuxBinaryRepo(
-  CRAN = "https://cloud.r-project.org",
+  CRAN = getOption("repos"),
   binaryLinux = "https://packagemanager.rstudio.com/"
 )
 }
