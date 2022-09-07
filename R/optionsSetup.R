@@ -7,7 +7,7 @@
 #'
 #'
 #' @export
-setLinuxBinaryRepo <- function(CRAN = "https://cloud.r-project.org", binaryLinux = "https://packagemanager.rstudio.com/") {
+setLinuxBinaryRepo <- function(CRAN = getOption("repos"), binaryLinux = "https://packagemanager.rstudio.com/") {
   local({
     options("repos" = c(CRAN = CRAN))
 
