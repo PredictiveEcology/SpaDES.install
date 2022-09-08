@@ -2,18 +2,19 @@
 % Please edit documentation in R/optionsSetup.R
 \name{setLinuxBinaryRepo}
 \alias{setLinuxBinaryRepo}
-\title{Setup for binary linux repositories}
+\title{Setup for binary Linux repositories}
 \usage{
 setLinuxBinaryRepo(
-  CRAN = getOption("repos"),
+  CRAN = getOption("repos", "https://cloud.r-project.org/"),
   binaryLinux = "https://packagemanager.rstudio.com/"
 )
 }
 \arguments{
-\item{CRAN}{The default CRAN repository to use, when not using a binary Linux repo}
+\item{CRAN}{The default CRAN repository to use, when not using a binary Linux repo.}
 
-\item{binaryLinux}{A binary linux repository.}
+\item{binaryLinux}{A CRAN repository serving binary Linux packages.}
 }
 \description{
-This function is run for its side effect on the options("repos") and the options("HTTPUserAgen")
+Enable use of binary package builds for Linux from the Rstudio Package Manager repo.
+This will set the \code{repos} option, affecting the current R session.
 }

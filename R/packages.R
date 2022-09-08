@@ -1,4 +1,6 @@
-utils::globalVariables(c(":=", "..colsToShow", "compareVersion"))
+utils::globalVariables(c(":=", "..colsToShow", "compareVersion", "duplicate"))
+
+.basePkgs <- getFromNamespace(".basePkgs", "Require")
 
 #' Pre-test for packages in SpaDES modules
 #'
@@ -116,7 +118,7 @@ makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE) {
           if (startsWith(tolower(ans), "y")) {
             #if (!require("Require")) {install.packages("Require"); require("Require")}
             #Require("PredictiveEcology/SpaDES.install@development (>= 0.0.7.9000)")
-            ln <- setdiff(unique(c(search(), loadedNamespaces())), Require:::.basePkgs)
+            ln <- setdiff(unique(c(search(), loadedNamespaces())), .basePkgs)
             a <- suppressMessages(Require::pkgDepTopoSort(ln))
             message("Trying to detach packages and restart; it may cause R to crash; rerun command without loading any packages")
             out <- lapply(rev(names(a)), function(x) {
@@ -124,8 +126,9 @@ makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE) {
               try(unloadNamespace(x), silent = TRUE)
             })
             rm(list = setdiff(ls(), "modulePath"))
-            if (isRstudio()) {
-              rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",modulePath,"')"))
+            if (requireNamespace("rstudioapi", quietly = TRUE) && isRstudio()) {
+              rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",
+                                                          modulePath, "')"))
             }
           }
           obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
@@ -254,10 +257,9 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs",
   vals
 }
 
-isRstudio <- function () {
+isRstudio <- function() {
   Sys.getenv("RSTUDIO") == 1 || .Platform$GUI == "RStudio" ||
-    if (suppressWarnings(requireNamespace("rstudioapi",
-                                          quietly = TRUE))) {
+    if (requireNamespace("rstudioapi", quietly = TRUE)) {
       rstudioapi::isAvailable()
     }
   else {
