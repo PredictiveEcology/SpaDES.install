@@ -4,14 +4,9 @@
 \alias{setLinuxBinaryRepo}
 \title{Setup for binary Linux repositories}
 \usage{
-setLinuxBinaryRepo(
-  CRAN = getOption("repos", "https://cloud.r-project.org/"),
-  binaryLinux = "https://packagemanager.rstudio.com/"
-)
+setLinuxBinaryRepo(binaryLinux = "https://packagemanager.rstudio.com/")
 }
 \arguments{
-\item{CRAN}{The default CRAN repository to use, when not using a binary Linux repo.}
-
 \item{binaryLinux}{A CRAN repository serving binary Linux packages.}
 }
 \description{
