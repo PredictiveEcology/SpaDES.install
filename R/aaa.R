@@ -20,3 +20,6 @@ isWindows <- utils::getFromNamespace("isWindows", "Require")
 
 #' @rdname imports
 messageDF <- utils::getFromNamespace("messageDF", "Require")
+
+#' @rdname imports
+messageVerbose <- utils::getFromNamespace("messageVerbose", "Require")

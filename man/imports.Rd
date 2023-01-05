@@ -6,6 +6,7 @@
 \alias{getGitHubFile}
 \alias{isWindows}
 \alias{messageDF}
+\alias{messageVerbose}
 \title{non-exported objects and functions from other packages}
 \usage{
 DESCRIPTIONFileDeps(
@@ -21,12 +22,15 @@ DESCRIPTIONFileVersionV(file, purge = getOption("Require.purge", FALSE))
 getGitHubFile(
   pkg,
   filename = "DESCRIPTION",
-  purge = getOption("Require.purge", FALSE)
+  purge = getOption("Require.purge", FALSE),
+  verbose = getOption("Require.verbose")
 )
 
 isWindows()
 
-messageDF(df, round)
+messageDF(df, round, verbose = getOption("Require.verbose"), verboseLevel = 1)
+
+messageVerbose(..., verbose = getOption("Require.verbose"), verboseLevel = 1)
 }
 \description{
 non-exported objects and functions from other packages

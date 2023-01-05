@@ -4,7 +4,11 @@
 \alias{makeSureAllPackagesInstalled}
 \title{Pre-test for packages in SpaDES modules}
 \usage{
-makeSureAllPackagesInstalled(modulePath, doInstalls = TRUE)
+makeSureAllPackagesInstalled(
+  modulePath,
+  doInstalls = TRUE,
+  verbose = getOption("Require.verbose")
+)
 }
 \arguments{
 \item{modulePath}{The path to modules, as per \code{SpaDES.core::setPaths}. Can
@@ -15,6 +19,13 @@ of modules.}
 package installations. If \code{FALSE}, then this function returns the character
 vector of packages (and version information) that is unduplicated, i.e.,
 the one with a highest minimum version specification.}
+
+\item{verbose}{Numeric or logical indicating how verbose should the function
+be. If -1 or -2, then as little verbosity as possible. If 0 or FALSE,
+then minimal outputs; if \code{1} or TRUE, more outputs; \code{2} even more. NOTE: in
+\code{Require} function, when \code{verbose >= 2}, the return object will have an
+attribute: \code{attr(.., "Require")} which has lots of information about the
+processes of the installs.}
 }
 \description{
 This function can be put at the start of project code.
