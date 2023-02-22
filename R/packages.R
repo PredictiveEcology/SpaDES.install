@@ -1,4 +1,6 @@
-utils::globalVariables(c(":=", "..colsToShow", "compareVersion"))
+utils::globalVariables(c(":=", "..colsToShow", "compareVersion", "duplicate"))
+
+.basePkgs <- getFromNamespace(".basePkgs", "Require")
 
 #' Pre-test for packages in SpaDES modules
 #'
@@ -10,10 +12,15 @@ utils::globalVariables(c(":=", "..colsToShow", "compareVersion"))
 #' @param modulePath The path to modules, as per `SpaDES.core::setPaths`. Can
 #'   be a vector of multiple character strings representing multiple locations
 #'   of modules.
+#' @param doInstalls logical. If `TRUE`, the default, then this function will attempt to do the
+#'   package installations. If `FALSE`, then this function returns the character
+#'   vector of packages (and version information) that is unduplicated, i.e.,
+#'   the one with a highest minimum version specification.
 #'
 #' @export
 #' @importFrom data.table setnames setorderv
-#' @importFrom Require getPkgVersions Require
+#' @importFrom Require Require
+#' @inheritParams Require::Require
 #' @importFrom utils getFromNamespace install.packages packageVersion
 #'
 #' @examples
@@ -26,129 +33,56 @@ utils::globalVariables(c(":=", "..colsToShow", "compareVersion"))
 #'   "~/GitHub/SpaDES-modules/modules/"
 #' ))
 #' }
-makeSureAllPackagesInstalled <- function(modulePath) {
+makeSureAllPackagesInstalled <- function(modulePath, doInstalls = TRUE, verbose = getOption("Require.verbose")) {
   if (missing(modulePath)) modulePath <- getOption("spades.modulePath")
   if (is.null(modulePath)) stop("modulePath must be supplied")
-  AllPackagesFile <- "._AllPackages.rds" ## TODO: put this in proper place
-  if (!file.exists(AllPackagesFile)) {
-    names(modulePath) <- modulePath
-    AllModules <- lapply(modulePath, dir)
-    if (length(unlist(AllModules)) == 0) return("No modules in that modulePath. All clear.")
-    # AllModules <- dir(modulePath)
-    # msg <- capture.output(type = "message",
-    #                       hasSC <- requireNamespace("SpaDES.core"))
-    # if (!hasSC) {
-    #   ## installing SpaDES.core will also install reproducible
-    #   if (any(grepl("there is no package.*SpaDES.core", msg))) {
-    #     message("Need to install SpaDES.core from CRAN to continue")
-    #   } else if (any(grepl("there is no package", msg))) {
-    #     message(paste(msg, collapse = "\n"))
-    #     message("Some dependencies of SpaDES.core are missing; installing those")
-    #   }
-    #
-    #   out <- Require("SpaDES.core", require = FALSE, install = TRUE)
-    # }
-    AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
-      message(mp)
-      out <- lapply(am, function(mod) {
-        message("  ", mod)
-        # SpaDES.core::packages(modules = mod, paths = mp)
-        packagesInModules(modulePath = mp, modules = mod)
-      })
-      unlist(out[!unlist(lapply(out, function(o) NROW(o) == 0))], recursive = FALSE)
+  names(modulePath) <- modulePath
+  AllModules <- lapply(modulePath, dir)
+  if (length(unlist(AllModules)) == 0) return("No modules in that modulePath. All clear.")
+  AllModules[lengths(AllModules) == 0] <- NULL
+
+  AllPackages <- Map(am = AllModules, mp = names(AllModules), function(am, mp) {
+    message(mp)
+    out <- lapply(am, function(mod) {
+      message("  ", mod)
+      packagesInModules(modulePath = mp, modules = mod)
     })
+    unlist(out[!unlist(lapply(out, function(o) NROW(o) == 0))], recursive = FALSE)
+  })
 
-    AllPackagesUnlisted <- unique(unname(unlist(AllPackages)))
+  pkgs <- unique(unname(unlist(AllPackages)))
+  if (isTRUE(doInstalls) && length(pkgs) > 0) {
+    out <- Require(pkgs, require = FALSE, verbose = max(2, verbose))
+    messagePkgsInstalled(out, verbose = verbose)
+  }
+  return(AllPackages)
+}
 
-    AllPackagesUnlistedRecursive <- Require::pkgDep(AllPackagesUnlisted, recursive = TRUE)
-    AllPackagesUnlistedRecursive <- unique(c(names(AllPackagesUnlistedRecursive),
-                  unlist(AllPackagesUnlistedRecursive)))
 
-    out <- Require::Require(require = FALSE, AllPackagesUnlistedRecursive,
-                            install = FALSE, verbose = TRUE)
-    out <- attr(out, "Require")
+messagePkgsInstalled <- function(out, verbose = getOption("Require.verbose")) {
+  out <- attr(out, "Require")
+  browser()
+  failed <- out[installed %in% FALSE & isPkgInstalled %in% FALSE]
+  basePkgs <- out$Package %in% Require:::.basePkgs
+  outUnique <- unique(out, by = "Package")
+  numPkgsNeeded <- NROW(outUnique)
+  numPkgsInstalled <- NROW(outUnique[isPkgInstalled %in% TRUE])
 
-    # Note this will return NA if there is no version specification
-    okVersions <- Require::getPkgVersions(out, install = FALSE)
-    okInstalled <- out$installed
-    okVersion <- okVersions$compareVersion >= 0
-    if (length(okVersion) == 0)
-      okVersion <- rep(TRUE, length(okInstalled))
-    if (anyNA(okVersion)) {
-      okVersion[is.na(okVersion)] <- TRUE
-    }
-    data.table::setorderv(out, "Package")
-    data.table::setnames(out, old = "Version", "InstalledVersion")
-    colsToShow <- c("packageFullName", "Package", "InstalledVersion", "correctVersion")
-    toRm <- setdiff(colnames(out), colsToShow)
-    data.table::set(out, NULL, toRm, NULL)
-
-    uniquedPkgs <- unique(out$Package)
-    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
-    dtLoaded <- data.table::data.table(Package = names(anyLoaded), loaded = anyLoaded)
-    out <- dtLoaded[out, on = "Package"]
-    needAction <- !okVersion | !okInstalled
-
-    if (any(needAction)) {
-      data.table::set(out, NULL, "needAction", FALSE)
-      out[needAction, needAction := TRUE]
-
-      doInstallsNow <- FALSE
-      if (any(out[needAction == TRUE]$loaded)) {
-        message("The following packages are in an incorrect state: ")
-        get("messageDF", envir = asNamespace("Require"))(print(out[needAction == TRUE]))
-        ans <- readline("Would you like to, unload packages and current environment, then restart R? (Y or N): ")
-        if (startsWith(tolower(ans), "y")) {
-          #if (!require("Require")) {install.packages("Require"); require("Require")}
-          #Require("PredictiveEcology/SpaDES.install@development (>= 0.0.7.9000)")
-          ln <- setdiff(unique(c(search(), loadedNamespaces())), Require:::.basePkgs)
-          a <- suppressMessages(Require::pkgDepTopoSort(ln))
-          message("Trying to detach packages and restart; it may cause R to crash; rerun command without loading any packages")
-          out <- lapply(rev(names(a)), function(x) {
-            try(detach(paste0("package:", x), unload = TRUE, character.only = TRUE), silent = TRUE)
-            try(unloadNamespace(x), silent = TRUE)
-          })
-          rm(list = setdiff(ls(), "modulePath"))
-          if (isRstudio()) {
-            rstudioapi::restartSession(command = paste0("SpaDES.install::makeSureAllPackagesInstalled('",modulePath,"')"))
-          }
-        }
-        obj <- list(state = out, AllPackagesUnlisted = AllPackagesUnlisted)
-        saveRDS(obj, file = AllPackagesFile)
-        stop("Restart R; Run this function again immediately.", call. = FALSE)
-      }
-      Require::Require(out[needAction == TRUE]$packageFullName,
-        require = FALSE,
-        upgrade = FALSE
-      )
-    } else {
-      message(
-        "All 'reqdPkgs' in the modules in ", paste(modulePath, collapse = ", "),
-        " are installed with correct version"
-      )
-    }
-  } else {
-    AllPackagesUnlisted <- readRDS(AllPackagesFile)
-    uniquedPkgs <- unique(AllPackagesUnlisted$state$Package)
-    uniquedPkgs <- setdiff(uniquedPkgs, getFromNamespace(".basePkgs", "Require"))
-    anyLoaded <- vapply(uniquedPkgs, function(pkg) isNamespaceLoaded(pkg), FUN.VALUE = logical(1))
-
-    pd <- Require::extractPkgName(
-      Require::pkgDep("PredictiveEcology/SpaDES.install", recursive = TRUE)[[1]]
-    )
-    anyLoaded <- anyLoaded[!names(anyLoaded) %in% pd]
-
-    if (any(anyLoaded)) {
-      stop(
-        "Some packages that need to be updated are still loaded; please restart R.",
-        "You may have to change your .Rprofile or Rstudio settings so ",
-        "packages don't get automatically loaded"
-      )
-    }
-    Require::Require(require = FALSE, AllPackagesUnlisted$AllPackagesUnlisted, upgrade = FALSE)
-    unlink(AllPackagesFile)
+  messageVerbose(Require:::green("Needed ", numPkgsNeeded - sum(basePkgs), " packages. ",
+                                 "Of those, ", numPkgsInstalled, " already installed."),
+                 verbose = verbose)
+  success <- out[installResult %in% "OK" & isPkgInstalled %in% FALSE]
+  if (NROW(success)) {
+    messageVerbose(
+      Require:::green("Successfully installed: ", paste0(success$packageFullName, collapse = ", ")),
+      verbose = verbose)
+  }
+  if (NROW(failed)) {
+    toPrint <- failed[, list(Package, packageFullName, availableVersionOK, installResult)]
+    messageDF(toPrint, verbose = verbose)
   }
 }
+
 
 #' Extract element from SpaDES module metadata
 #'
@@ -236,10 +170,9 @@ metadataInModules <- function(modules, metadataItem = "reqdPkgs",
   vals
 }
 
-isRstudio <- function () {
+isRstudio <- function() {
   Sys.getenv("RSTUDIO") == 1 || .Platform$GUI == "RStudio" ||
-    if (suppressWarnings(requireNamespace("rstudioapi",
-                                          quietly = TRUE))) {
+    if (requireNamespace("rstudioapi", quietly = TRUE)) {
       rstudioapi::isAvailable()
     }
   else {

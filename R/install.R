@@ -119,7 +119,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
   #   "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
   #   " R session."
   # )
-  # out <- readline("Do you want to proceed anyway? Y or N")
+  # out <- readline("Do you want to proceed anyway (Y or N)? ")
   # if (!identical("y", tolower(out))) {
   #   stop("Try to restart R with Ctrl-Alt-F10 if you are in RStudio")
   # }
@@ -188,7 +188,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
           loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
           if (length(intersect(loadedNS, toUpdate))) {
             message(restartMess)
-            out <- readline("Do you want to proceed anyway? Y or N")
+            out <- readline("Do you want to proceed anyway (Y or N)? ")
             if (!identical("y", tolower(out))) stop(restartMessAtStop)
           }
           message("updating packages ... ",
@@ -215,7 +215,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
     loadedNS <- setdiff(loadedNamespaces(), basePkgs)  # rerun because Rstudio loads behind the scenes
     if (length(intersect(loadedNS, fromSource))) {
       message(restartMess)
-      out <- readline("Do you want to proceed anyway? Y or N")
+      out <- readline("Do you want to proceed anyway (Y or N)? ")
       if (!identical("y", tolower(out))) stop(restartMessAtStop)
     }
 
@@ -241,7 +241,7 @@ installSpaDES <- function(type, libPath = .libPaths()[1],
       loadedNS <- setdiff(loadedNamespaces(), basePkgs) # rerun because Rstudio loads behind the scenes
       if (length(intersect(loadedNS, needInstalled$Package))) {
         message(restartMess)
-        out <- readline("Do you want to proceed anyway? Y or N")
+        out <- readline("Do you want to proceed anyway (Y or N)? ")
         if (!identical("y", tolower(out))) stop(restartMessAtStop)
       }
       anything <- Require(pkgsToInstall, require = FALSE, libPaths = libPath, upgrade = FALSE,
@@ -345,14 +345,17 @@ extractDepsOnly <- function(pkgs) {
   depsCleanUniq
 }
 
-restartMess <- paste0(
-  "It looks like you may need to restart your R session to get an R session without ",
-  "R packages loaded already. SpaDES.install needs to be the only package loaded. ",
+restartMess <- paste(
+  "It looks like you may need to restart your R session to get an R session without",
+  "R packages loaded already. SpaDES.install needs to be the only package loaded.",
   "If you are using RStudio and you are unable to restart without",
   "lots of R packages being pre-loaded, you may need to run this from a non-RStudio",
-  " R session."
+  "R session."
 )
-restartMessAtStop <- "Try to restart R with Ctrl-Shift-F10 (⌘-Shift-F10) if you are in RStudio"
+restartMessAtStop <- paste(
+  "Try to restart R with",
+  ifelse(identical(Sys.info()[["sysname"]], "Darwin"), "Command-Shift-F10", "Ctrl-Shift-F10"),
+  "if you are in RStudio.")
 
 #' Character vector of packages that must be installed from source in Linux-alikes
 #'
@@ -362,4 +365,4 @@ restartMessAtStop <- "Try to restart R with Ctrl-Shift-F10 (⌘-Shift-F10) if yo
 #'
 sourcePkgs <- function(additional = NULL)
   c("igraph", "rgeos", "rgdal", "terra", "sf", "units", "stringfish",
-                "qs", "sp", "Rcpp", "RcppParallel", "cpp11", "lwgeom", additional)
+    "qs", "sp", "Rcpp", "RcppParallel", "cpp11", "lwgeom", additional)
